@@ -36,7 +36,7 @@ export default function NavBar() {
         </details>
         <ul>
             <select>
-                <option value="" disabled selected>Select View</option>
+                <option value="" disabled>Select View</option>
                 <option>Single Window</option>
                 <option>Multi Window</option>
             </select>

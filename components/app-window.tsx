@@ -4,18 +4,18 @@ import Window from "./window";
 export default function AppWindow() {
     return(
         <div className="grid">
-            <div>
+            <article className="bg-blue-100">
                 <p>Settings</p>
                 <Settings />
-            </div>
-            <div>
+            </article>
+            <article className="bg-red-100">
                 <p>Window1</p>
-                <Window />
-            </div>
-            <div>
+                <Window content="Chat"/>
+            </article>
+            <article className="bg-blue-100">
                 <p>Window2</p>
-                <Window />
-            </div>
+                <Window content="SimilarityGraph"/>
+            </article>
         </div>
     );
 }

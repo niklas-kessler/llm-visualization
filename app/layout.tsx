@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-/**import './globals.css'*/
+import './globals.css'
 import '@picocss/pico'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -22,7 +22,7 @@ export default function RootLayout({
       <Head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="stylesheet" href="css/pico.min.css" />
+        <link href="./globals.css" rel="stylesheet"></link>
       </Head>
       <body className={inter.className}>{children}</body>
     </html>
