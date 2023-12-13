@@ -3,9 +3,9 @@ import NavBar from '@/components/nav-bar'
 
 export default function Home() {
   return (
-    <main className='container'>
+    <div className="container">
       <NavBar />
       <AppWindow />
-    </main>
+    </div>
   )
 }

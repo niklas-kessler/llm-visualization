@@ -1,46 +1,55 @@
+"use client"
+
+import { useState } from "react";
+
 export default function NavBar() {
+    
+    const showHistory = false;
+    const selectedWindow = {
+        "Chat": true,
+        "StandardGraph": true,
+        "KeywordGraph": false,
+        "SimilarityGraph": false,
+    };
+    const multiView = false;
+    const maxNWindow = () => multiView? 2:1;
+
     return(
-    <nav>
-        <ul>
-            <li><a href="#">Settings</a></li>
-        </ul>
-        <details role="list">
-            <summary aria-haspopup="listbox">Dropdown</summary>
-            <ul role="listbox">
-                <li>
-                    <label>
-                        <input type="checkbox" />
-                        Chat
-                    </label>
-                </li>
-                <li>
-                    <label>
-                        <input type="checkbox" />
-                        Keyword Graph
-                    </label>
-                </li>
-                <li>
-                    <label>
-                        <input type="checkbox" />
-                        Highlight Graph
-                    </label>
-                </li>
-                <li>
-                    <label>
-                        <input type="checkbox" />
-                        Similarity Graph
-                    </label>
-                </li>
-                
-            </ul>
-        </details>
-        <ul>
-            <select>
-                <option value="" disabled>Select View</option>
-                <option>Single Window</option>
-                <option>Multi Window</option>
-            </select>
-        </ul>
+    <nav className="flex justify-evenly p-4 bg-gray-200">
+         <div className="flex flex-col">
+            <label className="text-center">WindowSelect</label>
+            <div className="flex">
+                <button className={`py-1 px-2 rounded-l-md border-2 border-black ${showHistory? 'bg-gray-600' : 'bg-gray-400'}`}>
+                    H
+                </button>
+                <div className='w-2 border-2 border-black bg-gray-400'></div>
+                <button className={`py-1 px-2 border-2  border-black ${selectedWindow["Chat"]? 'bg-gray-600' : 'bg-gray-400'}`}>
+                    W1
+                </button>
+                <button className={`py-1 px-2 border-2  border-black ${selectedWindow["StandardGraph"]? 'bg-gray-600' : 'bg-gray-400'}`}>
+                    W2
+                </button>
+                <button className={`py-1 px-2 border-2  border-black ${selectedWindow["KeywordGraph"]? 'bg-gray-600' : 'bg-gray-400'}`}>
+                    W3
+                </button>
+                <button className={`py-1 px-2 border-2 rounded-r-md border-black ${selectedWindow["SimilarityGraph"]? 'bg-gray-600' : 'bg-gray-400'} `}>
+                    W4
+                </button>
+                <span className="self-center pl-2">(1/2)</span>
+            </div>
+        </div>
+        <div className="justify-start flex flex-col">
+            <label className="text-center">ViewSelect</label>
+            <div className="flex">
+                <button className={`py-1 px-2 rounded-l-md border-2 border-black ${!multiView? 'bg-gray-600' : 'bg-gray-400'}`}>
+                    SV
+                </button>
+                <button className={`py-1 px-2 border-2 rounded-r-md border-black ${multiView? 'bg-gray-600' : 'bg-gray-400'}`}>
+                    MV
+                </button>
+            </div>
+        </div>
+        
     </nav>
     );
 }
