@@ -4,18 +4,19 @@ import { useState } from "react";
 
 export default function NavBar() {
     
-    const showHistory = false;
+    const showHistory = true;
     const selectedWindow = {
         "Chat": true,
         "StandardGraph": false,
         "KeywordGraph": false,
-        "SimilarityGraph": false,
+        "SimilarityGraph": true,
     };
-    const multiView = false;
-    const maxNWindow = () => multiView? 2:1;
+    const splitScreen = true;
+    const nWindow = () => Object.values(selectedWindow).filter(val => val).length; 
+    const maxNWindow = () => splitScreen? 2:1;
 
     return(
-    <nav className="flex justify-between p-4 bg-gray-200">
+    <nav className="flex  justify-between p-4 bg-gray-200">
         <div className="flex flex-col justify-between">
             <div className="flex"></div>
             <button className="flex self-center h-9 py-1 px-2 rounded-md border-2 border-black bg-gray-400">
@@ -41,16 +42,16 @@ export default function NavBar() {
                 <button className={`py-1 px-2 border-2 rounded-r-md border-black ${selectedWindow["SimilarityGraph"]? 'bg-gray-600' : 'bg-gray-400'} `}>
                     W4
                 </button>
-                <span className="self-center pl-2">(1/2)</span>
+                <span className="self-center pl-2">({nWindow().toString()}/2)</span>
             </div>
         </div>
         <div className="flex flex-col justify-between">
             <label className="text-center">ViewSelect</label>
             <div className="flex">
-                <button className={`py-1 px-2 rounded-l-md border-2 border-black ${!multiView? 'bg-gray-600' : 'bg-gray-400'}`}>
+                <button className={`py-1 px-2 rounded-l-md border-2 border-black ${!splitScreen? 'bg-gray-600' : 'bg-gray-400'}`}>
                     SV
                 </button>
-                <button className={`py-1 px-2 border-2 rounded-r-md border-black ${multiView? 'bg-gray-600' : 'bg-gray-400'}`}>
+                <button className={`py-1 px-2 border-2 rounded-r-md border-black ${splitScreen? 'bg-gray-600' : 'bg-gray-400'}`}>
                     MV
                 </button>
             </div>

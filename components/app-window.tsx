@@ -13,18 +13,17 @@ export default function AppWindow() {
         </article>
     ): null;*/
 
+    const showHistory = true;
+
     return(
-        <div className="container flex items-center">
-            <div className="flex-1 p-4 border">
-                <p>History</p>
+        <div className="flex-grow flex">
+            {showHistory && (<div className="p-4 border">
                 <History />
-            </div>
+            </div>)}
             <div className="flex-1 p-4 border">
-                <p>Window1</p>
                 <Window content="Chat"/>
             </div>
             <div className="flex-1 p-4 border">
-                <p>Window2</p>
                 <Window content="SimilarityGraph"/>
             </div>
         </div>
