@@ -3,9 +3,9 @@ import NavBar from '@/components/nav-bar'
 
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen">
-      <NavBar />
-      <AppWindow />
+    <div className="h-screen flex flex-col">
+        <NavBar />
+        <AppWindow />
     </div>
   )
 }

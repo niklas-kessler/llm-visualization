@@ -23,8 +23,11 @@ export default function Window({content}: {content:string}) {
     }
 
     return(
-        <div>
+        <div className="flex flex-col bg-green-100 h-full">
+            <div className="justify-start p-2">
+                <label className="border-b border-r py-1 px-2">{content}</label>    
+            </div>
             { componentToRender }
-        </div>       
+        </div>
     );
 }

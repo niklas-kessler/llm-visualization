@@ -16,16 +16,18 @@ export default function AppWindow() {
     const showHistory = true;
 
     return(
-        <div className="flex-grow flex">
-            {showHistory && (<div className="p-4 border">
-                <History />
-            </div>)}
-            <div className="flex-1 p-4 border">
-                <Window content="Chat"/>
+        <main className="flex-1 overflow-hidden">
+            <div className="h-full flex">
+                {showHistory && (<div className=" basis-1/6 border">
+                    <History />
+                </div>)}
+                <div className="flex-1 border">
+                    <Window content="Chat"/>
+                </div>
+                <div className="flex-1 border">
+                    <Window content="SimilarityGraph"/>
+                </div>
             </div>
-            <div className="flex-1 p-4 border">
-                <Window content="SimilarityGraph"/>
-            </div>
-        </div>
+        </main>
     );
 }
