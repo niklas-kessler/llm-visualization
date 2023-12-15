@@ -18,13 +18,13 @@ export default function AppWindow() {
     return(
         <main className="flex-1 overflow-hidden">
             <div className="h-full flex">
-                {showHistory && (<div className=" basis-1/6 border">
+                {showHistory && (<div className=" basis-1/6 border-r-2 bg-stone-200 border-zinc-400">
                     <History />
                 </div>)}
-                <div className="flex-1 border">
+                <div className="flex-1">
                     <Window content="Chat"/>
                 </div>
-                <div className="flex-1 border">
+                <div className="flex-1 border-l-2 border-zinc-400">
                     <Window content="SimilarityGraph"/>
                 </div>
             </div>

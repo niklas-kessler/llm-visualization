@@ -16,7 +16,7 @@ export default function NavBar() {
     const maxNWindow = () => splitScreen? 2:1;
 
     return(
-        <nav className="flex justify-between p-4 bg-gray-200">
+        <nav className="flex justify-between p-4 bg-stone-300 pb-6">
             <div className="flex flex-col justify-between">
                 <div className="flex"></div>
                 <button className="flex self-center h-9 py-1 px-2 rounded-md border-2 border-black bg-gray-400">
