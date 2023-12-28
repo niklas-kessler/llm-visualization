@@ -2,14 +2,20 @@ import Chat from './chat';
 import StandardGraph from './standard-graph';
 import KeywordGraph from './keyword-graph';
 import SimilarityGraph from './similarity-graph';
-import clsx from 'clsx';
+import { MessageType } from '@/app/utils/types';
 
-export default function Window({content}: {content:string}) {
+interface WindowProps {
+    content: string,
+    messages: MessageType[],
+    appendMessage: (message: MessageType) => void;
+}
+
+export default function Window({content, messages, appendMessage}: WindowProps) {
     let componentToRender;
     
     switch(content){
         case "Chat":
-            componentToRender = <Chat />;
+            componentToRender = <Chat messages={messages} appendMessage={appendMessage}/>;
             break;
         case "StandardGraph":
             componentToRender = <StandardGraph />;

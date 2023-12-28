@@ -1,24 +1,23 @@
 import Message from "./message";
 import ChatInput from "./chat-input";
+import { MessageType } from "@/app/utils/types";
 
-export default function Chat() {
+interface ChatProps {
+    messages: MessageType [],
+    appendMessage: (message: MessageType) => void;
+}
+
+export default function Chat({ messages, appendMessage }: ChatProps) {
     return(
         <div className="flex-1 overflow-hidden flex flex-col justify-between">
             <div className="flex-1 overflow-hidden space-y-10 overflow-y-auto px-4 py-4 max-h-full">
-                <Message content="This is a really really really really really really really really really really really really really really really really really really really really really really really really really really long request." sender="User"/>
-                <Message content="This is a tool-call." sender="ChatGPT"/>
-                <Message content="This is a tool-result." sender="Tool"/>
-                <Message content="This is a final answer." sender="ChatGPT"/>
-                <Message content="This is a request." sender="User"/>
-                <Message content="This is a tool-call." sender="ChatGPT"/>
-                <Message content="This is a tool-result." sender="Tool"/>
-                <Message content="This is a final answer." sender="ChatGPT"/>
-                <Message content="This is a request." sender="User"/>
-                <Message content="This is a tool-call." sender="ChatGPT"/>
-                <Message content="This is a tool-result." sender="Tool"/>
-                <Message content="This is a final answer." sender="ChatGPT"/>
+                {messages.map((element, index) => (
+                    <div key={index}>
+                        <Message sender={element.sender} content={element.content}/>
+                    </div>
+                ))}
             </div>
-            <ChatInput />
+            <ChatInput appendMessage={appendMessage}/>
         </div>
     );
 }
