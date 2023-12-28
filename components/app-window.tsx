@@ -45,7 +45,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
                 </div>
                 {activeWindows[1] && (
                     <div className="flex-1 border-l-2 border-zinc-400">
-                        <Window content={activeWindows[1]} messages={messages}/>
+                        <Window content={activeWindows[1]} messages={messages} appendMessage={appendMessage}/>
                     </div>
                 )}
             </div>
