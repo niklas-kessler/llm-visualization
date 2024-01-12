@@ -1,4 +1,4 @@
 export interface MessageType {
-    sender: string,
+    role: string,
     content: string
 }

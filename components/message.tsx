@@ -1,15 +1,23 @@
-export default function Message({content, sender}: {content:string, sender:string}) {
+export default function Message({role, content}: {role:string, content:string}) {
         
+    const roleDict: Record<string, string> = {
+        "system": "System",
+        "user": "User",
+        "assistant": "ChatGPT",
+        "tool": "Tool,"
+    }
+
     const colorDict: Record<string, string> = {
-        "User": "bg-blue-400",
-        "ChatGPT": "bg-green-400",
-        "Tool": "bg-red-400",
+        "system": "bg-purple-400",
+        "user": "bg-blue-400",
+        "assistant": "bg-green-400",
+        "tool": "bg-red-400",
     }
 
     return(
         <div className="flex">
-            <div className={`h-10 ${colorDict[sender]} rounded-full mr-4`}>
-                <div className="p-2"> {sender} </div>
+            <div className={`h-10 ${colorDict[role]} rounded-full mr-4`}>
+                <div className="p-2"> {roleDict[role]} </div>
             </div>
             <div className="bg-slate-300 w-full rounded">
                 <div className="p-2">{content}</div>

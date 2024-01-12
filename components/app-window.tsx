@@ -13,23 +13,19 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     
     const initMessages = () => {
         let newMessages: MessageType[] = [];
-        for (let i = 0; i < 3; i++) {
-            newMessages.push({sender: "User", content: "This is a User request."});
-            newMessages.push({sender: "ChatGPT", content: "This is a Tool Call."});
-            newMessages.push({sender: "Tool", content: "This is a Tool's answer."});
-            newMessages.push({sender: "ChatGPT", content: "This is a final answer."});
-          }
+        newMessages.push({ role: "system", content: "You are a helpful assistant. Keep yourself as short as possible."})
         return newMessages;
     }
     const [messages, SetMessages] = useState<MessageType[]>(initMessages());
 
-    function appendMessage (message: MessageType) {
-        let newMessages = [...messages];
-        newMessages.push(message);
-        newMessages.push({sender: "ChatGPT", content: "This is a Tool Call."});
-        newMessages.push({sender: "Tool", content: "This is a Tool's answer."});
-        newMessages.push({sender: "ChatGPT", content: "This is a final answer."});
-        SetMessages(newMessages)
+    // TODO: If called multiple times in an async method, last call will overwrite previous ones -> only appends last message. 
+    // Temporary solution: Collect all messages and pass them as array in single call at the end of async function.
+    function appendMessage (newMessages: MessageType[]) {
+        let updatedMessages = [...messages];
+        for (let m of newMessages){
+            updatedMessages.push(m);
+        }
+        SetMessages(updatedMessages)
     }
 
     return(

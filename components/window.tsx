@@ -7,7 +7,7 @@ import { MessageType } from '@/app/utils/types';
 interface WindowProps {
     content: string,
     messages: MessageType[],
-    appendMessage: (message: MessageType) => void;
+    appendMessage: (message: MessageType[]) => void;
 }
 
 export default function Window({content, messages, appendMessage}: WindowProps) {
