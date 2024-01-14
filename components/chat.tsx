@@ -21,9 +21,9 @@ export default function Chat({ messages, appendMessage }: ChatProps) {
     }, [messages]);
 
     async function sendPrompt(prompt: string) {        
-        // append user message
         const userMessage: MessageType = {role: "user", content: prompt};    
-
+        appendMessage([userMessage]) // only, in order to already show
+        
         // get response
         const response = await fetch("/api/chatgpt", {
             method:"POST",
@@ -36,7 +36,7 @@ export default function Chat({ messages, appendMessage }: ChatProps) {
         });
         const result = await response.json();
 
-        // append both user and chatgpt response at the same time
+        // append user again, since message-state not updated yet
         const assistantMessage: MessageType = {role: result.choices[0].message.role, content: result.choices[0].message.content}
         appendMessage([userMessage, assistantMessage]);
     }
