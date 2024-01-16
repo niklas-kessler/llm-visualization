@@ -2,23 +2,23 @@ import Chat from './chat';
 import StandardGraph from './standard-graph';
 import KeywordGraph from './keyword-graph';
 import SimilarityGraph from './similarity-graph';
-import { MessageType } from '@/app/utils/types';
+import { MessageType, ReasoningFunctionsType } from '@/app/utils/types';
 
 interface WindowProps {
     content: string,
     messages: MessageType[],
-    appendMessage: (message: MessageType[]) => void;
+    reasoning_functions: ReasoningFunctionsType
 }
 
-export default function Window({content, messages, appendMessage}: WindowProps) {
+export default function Window({content, messages, reasoning_functions }: WindowProps) {
     let componentToRender;
     
     switch(content){
         case "Chat":
-            componentToRender = <Chat messages={messages} appendMessage={appendMessage}/>;
+            componentToRender = <Chat messages={messages} reasoning_functions={reasoning_functions}/>;
             break;
         case "StandardGraph":
-            componentToRender = <StandardGraph />;
+            componentToRender = <StandardGraph reasoning_functions={reasoning_functions}/>;
             break
         case 'KeywordGraph':
             componentToRender = <KeywordGraph />;

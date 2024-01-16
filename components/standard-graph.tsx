@@ -1,5 +1,24 @@
-export default function StandardGraph() {
+import { ReasoningFunctionsType } from "@/app/utils/types";
+
+interface StandardGraphProps {
+    reasoning_functions: ReasoningFunctionsType
+}
+
+export default function StandardGraph( { reasoning_functions }: StandardGraphProps) {
+    
+    const { user, forward, backward, refine } = reasoning_functions
+
     return(
-        <p>Standard Graph Component</p>       
+        <div className=" pt-7 flex justify-evenly">
+            <button className="border-zinc-600 border-2 rounded-md" onClick={forward}>
+                Forward
+            </button>
+            <button className="border-zinc-600 border-2 rounded-md" onClick={refine}>
+                Refine
+            </button>
+            <button className="border-zinc-600 border-2 rounded-md" onClick={backward}>
+                Backward
+            </button>
+        </div>
     );
 }

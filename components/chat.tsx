@@ -2,15 +2,15 @@
 
 import Message from "./message";
 import ChatInput from "./chat-input";
-import { MessageType } from "@/app/utils/types";
+import { MessageType, ReasoningFunctionsType } from "@/app/utils/types";
 import React, { useEffect } from "react";
 
 interface ChatProps {
     messages: MessageType [],
-    appendMessage: (message: MessageType[]) => void;
+    reasoning_functions: ReasoningFunctionsType
 }
 
-export default function Chat({ messages, appendMessage }: ChatProps) {
+export default function Chat({ messages, reasoning_functions }: ChatProps) {
 
     // Scroll to the bottom of the chat when messages change
     const chatRef = React.createRef<HTMLDivElement>();
@@ -20,26 +20,7 @@ export default function Chat({ messages, appendMessage }: ChatProps) {
       }
     }, [messages]);
 
-    async function sendPrompt(prompt: string) {        
-        const userMessage: MessageType = {role: "user", content: prompt};    
-        appendMessage([userMessage]) // only, in order to already show
-        
-        // get response
-        const response = await fetch("/api/chatgpt", {
-            method:"POST",
-            headers:{
-            "Content-Type": "application/json",
-            },
-            body:JSON.stringify({
-            messages: [...messages, userMessage]
-            })
-        });
-        const result = await response.json();
-
-        // append user again, since message-state not updated yet
-        const assistantMessage: MessageType = {role: result.choices[0].message.role, content: result.choices[0].message.content}
-        appendMessage([userMessage, assistantMessage]);
-    }
+    const user = reasoning_functions.user
 
     return(
         <div className="flex-1 overflow-hidden flex flex-col justify-between">
@@ -50,7 +31,7 @@ export default function Chat({ messages, appendMessage }: ChatProps) {
                     </div>
                 ))}
             </div>
-            <ChatInput sendPrompt={sendPrompt}/>
+            <ChatInput sendPrompt={user}/>
         </div>
     );
 }
