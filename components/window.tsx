@@ -21,7 +21,7 @@ export default function Window({content, chatMessages, nodes, selectedNode, setS
             componentToRender = <Chat chatMessages={chatMessages} reasoning_functions={reasoning_functions}/>;
             break;
         case "StandardGraph":
-            componentToRender = <StandardGraph reasoning_functions={reasoning_functions} selectedNode={selectedNode} setSelectedNode={setSelectedNode}/>;
+            componentToRender = <StandardGraph nodes={nodes} selectedNode={selectedNode} setSelectedNode={setSelectedNode} reasoning_functions={reasoning_functions}/>;
             break
         case 'KeywordGraph':
             componentToRender = <KeywordGraph />;

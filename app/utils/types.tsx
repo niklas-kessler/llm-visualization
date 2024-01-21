@@ -12,7 +12,8 @@ export interface ReasoningFunctionsType {
     user: (prompt: string) => void,
     forward: () => void,
     backward: () => void,
-    refine: () => void
+    refine: () => void,
+    parallel_split: () => void,
 }
 
 export interface Node {

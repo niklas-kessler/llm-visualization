@@ -10,7 +10,7 @@ interface AppWindowProps {
 }
 
 
-export default function AppWindow({ showHistory, activeWindows }: AppWindowProps) {
+export default function AppWindow({ showHistory, activeWindows }: AppWindowProps) {    
     class Node {
         static idCount_temp = 0;    //temporal counter until compoment is being refreshed, which will 1. update idCount: useState<number> and 2. reset this temporal counter
         id: number;
@@ -31,9 +31,10 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             parents?: number[];
             children?: number[];
         }) {
+            console.log(idCount, Node.idCount_temp)
             this.id = idCount + Node.idCount_temp;
-            Node.idCount_temp++;
             setIdCount(idCount + Node.idCount_temp + 1);
+            Node.idCount_temp++;
             this.type = type;
             this.x = x;
             this.y = y;
@@ -54,7 +55,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             new Node({type:"forward", x:0, y:15, messages: [{role:'assistant', content:'Another reasoning step'}], children:[7], parents:[2]}),
             new Node({type:"forward", x:5, y:15, messages: [{role:'assistant', content:'Another reasoning step'}], children:[7], parents:[2]}),
             new Node({type:"aggregate", x:0, y:20, messages: [{role:'system', content:'Aggregate the previous steps'},{role:'assistant', content:'Most prompisin seems the answer from google, indicating that ...'}], children:[8], parents:[3,4,5]}),
-            new Node({type:"final", x:0, y:20, messages: [{role:'system', content:'Based on all the reasoning steps, give a final improved answer'},{role:'assistant', content:'Final answer: ...'}], parents:[6]}),
+            new Node({type:"final", x:0, y:20, messages: [{role:'system', content:'Based on all the reasoning steps, give a final improved answer'},{role:'assistant', content:'Final answer: ...'}], children:[], parents:[6]}),
             ];
         let nodeDict: {[id:number]:Node} = {};
         
@@ -70,6 +71,9 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     const [chatMessages, setChatMessages] = useState<MessageType[]>([]);
     const [idCount, setIdCount] = useState<number>(0); // use as (idCount + Node.idCount_temp) to get the actual current id
     const [nodes, setNodes] = useState<{ [id: number]: Node }>(initNodes);
+
+    console.log("rerender, nodes:", nodes)
+
 
     // update collected messages, triggered when selectedNode is changed
     useEffect(() => {
@@ -144,7 +148,11 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     function reasoning_user(prompt: string) {
         const userMessage: MessageType = {role: "user", content: prompt};            
         
-        const node: Node = new Node({type:"user", x:0, y:0, messages: [userMessage], parents: (selectedNode !== -1 ? [selectedNode]: []), children:[]})
+        const node: Node = new Node({type:"user", x:0, y:0, messages: [userMessage], parents: [], children:[]})
+        if(selectedNode !== -1){
+            node.parents = [selectedNode];
+            nodes[selectedNode].children?.push(node.id);
+        }
         appendNodes([node]);
     }
 
@@ -161,7 +169,11 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const result = await response.json();
         const assistant_message: MessageType = {role: result.choices[0].message.role, content: result.choices[0].message.content}
         
-        const node: Node = new Node({type:"forward", x:0, y:0, messages:[assistant_message], parents: ([selectedNode]), children:[]})
+        const node: Node = new Node({type:"forward", x:0, y:0, messages:[assistant_message], parents: [], children:[]})
+        if(selectedNode !== -1){
+            node.parents = [selectedNode];
+            nodes[selectedNode].children?.push(node.id);
+        }
         appendNodes([node]);        
     }
 
@@ -179,6 +191,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             delete updatedNodes[selectedNode];
         } else {
             delete updatedNodes[selectedNode];
+            updatedNodes[parentId].children?.splice(updatedNodes[parentId].children?.indexOf(selectedNode) as number, 1);
         }
         setNodes(updatedNodes);
         setSelectedNode(parentId);
@@ -204,6 +217,89 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const assistant_message: MessageType = {role: result.choices[0].message.role, content: result.choices[0].message.content}
         
         const node: Node = new Node({type: "refine", x:0, y:0, messages:[system_message, assistant_message], parents:([selectedNode]), children:[]})
+        if(selectedNode !== -1){
+            node.parents = [selectedNode];
+            nodes[selectedNode].children?.push(node.id);
+        }
+        appendNodes([node]);
+    }
+
+    async function reasoning_parallel_split() {        
+        const response1 = await fetch("/api/chatgpt", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                messages: [...chatMessages],
+                temperature: 0.9,
+            }),
+        });
+        const response2 = await fetch("/api/chatgpt", {
+            method:"POST",
+            headers:{
+            "Content-Type": "application/json",
+            },
+            body:JSON.stringify({
+                messages: [...chatMessages],
+                temperature: 0.9,
+            })
+        });
+        const response3 = await fetch("/api/chatgpt", {
+            method:"POST",
+            headers:{
+            "Content-Type": "application/json",
+            },
+            body:JSON.stringify({
+                messages: [...chatMessages],
+                temperature: 0.9,
+            })
+        });
+        const result1 = await response1.json();
+        const result2 = await response2.json();
+        const result3 = await response3.json();
+        const assistant_message1: MessageType = {role: result1.choices[0].message.role, content: result1.choices[0].message.content}
+        const assistant_message2: MessageType = {role: result2.choices[0].message.role, content: result2.choices[0].message.content}
+        const assistant_message3: MessageType = {role: result3.choices[0].message.role, content: result3.choices[0].message.content}
+        
+        const node_split: Node = new Node({type:"split", x:0, y:0, messages:[], parents: ([selectedNode]), children:[]})
+        const node1: Node = new Node({type:"forward", x:0, y:0, messages:[assistant_message1], parents: ([node_split.id]), children:[]})
+        const node2: Node = new Node({type:"forward", x:0, y:0, messages:[assistant_message2], parents: ([node_split.id]), children:[]})
+        const node3: Node = new Node({type:"forward", x:0, y:0, messages:[assistant_message3], parents: ([node_split.id]), children:[]})
+        node_split.children = [node1.id, node2.id, node3.id]
+        if(selectedNode !== -1){
+            node_split.parents = [selectedNode];
+            nodes[selectedNode].children?.push(node_split.id);
+        }
+        appendNodes([node_split, node1, node2, node3]);        
+    }
+
+    async function reasoning_aggregate() {
+        
+        // TODO: Collect branches and augment messageNodes with them
+
+        // system prompt
+        const refine_prompt="In 3 different reasoning steps, you have come to 3 different answers. Please overthink. Which one is the most promising and accurate? How can you combine and summarize them?"
+        const system_message: MessageType = {role: "system", content: refine_prompt}
+
+        // get response
+        const response = await fetch("/api/chatgpt", {
+            method:"POST",
+            headers:{
+            "Content-Type": "application/json",
+            },
+            body:JSON.stringify({
+            messages: [...chatMessages]
+            })
+        });
+        const result = await response.json();
+        const assistant_message: MessageType = {role: result.choices[0].message.role, content: result.choices[0].message.content}
+        
+        const node: Node = new Node({type: "refine", x:0, y:0, messages:[system_message, assistant_message], parents:([selectedNode]), children:[]})
+        if(selectedNode !== -1){
+            node.parents = [selectedNode];
+            nodes[selectedNode].children?.push(node.id);
+        }
         appendNodes([node]);
     }
 
@@ -211,7 +307,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         user: reasoning_user,
         forward: reasoning_forward,
         backward: reasoning_backward,
-        refine: reasoning_refine
+        refine: reasoning_refine,
+        parallel_split: reasoning_parallel_split,
     }
 
     return(
