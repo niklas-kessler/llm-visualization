@@ -9,16 +9,18 @@ export async function POST(request: NextRequest){
 
   const params = await request.json();
   const messages = params.messages;
+  const standardMessages = [{
+    role:"system", content:"You are a helpful assistant."
+  }]
 
   const response = await openai.chat.completions.create({
     model: "gpt-3.5-turbo", // TODO: change model to gpt-3.5-turbo-1106, (for low-cost dev: keep gpt-3.5-turbo)
-    messages: messages,
+    messages: [...standardMessages, ...messages],
     temperature: 0,
     max_tokens: 128,
     //tools: tools,
     //tool_choice: "auto",
   })
-
   return NextResponse.json(response)
 }
 

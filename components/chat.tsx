@@ -5,12 +5,12 @@ import ChatInput from "./chat-input";
 import { MessageType, ReasoningFunctionsType } from "@/app/utils/types";
 import React, { useEffect } from "react";
 
-interface ChatProps {
-    messages: MessageType [],
+interface ChatProps {    
+    chatMessages: MessageType[],
     reasoning_functions: ReasoningFunctionsType
 }
 
-export default function Chat({ messages, reasoning_functions }: ChatProps) {
+export default function Chat({ chatMessages, reasoning_functions }: ChatProps) {
 
     // Scroll to the bottom of the chat when messages change
     const chatRef = React.createRef<HTMLDivElement>();
@@ -18,20 +18,19 @@ export default function Chat({ messages, reasoning_functions }: ChatProps) {
       if (chatRef.current) {
         chatRef.current.scrollTop = chatRef.current.scrollHeight;
       }
-    }, [messages]);
+    }, [chatMessages]);
 
-    const user = reasoning_functions.user
 
     return(
         <div className="flex-1 overflow-hidden flex flex-col justify-between">
             <div ref={chatRef} className="flex-1 overflow-hidden space-y-10 overflow-y-auto px-4 py-4 max-h-full">
-                {messages.map((element, index) => (
+                {chatMessages.map((element, index) => (
                     <div key={index}>
                         <Message role={element.role} content={element.content}/>
                     </div>
                 ))}
             </div>
-            <ChatInput sendPrompt={user}/>
+            <ChatInput sendPrompt={reasoning_functions.user}/>
         </div>
     );
 }

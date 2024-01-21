@@ -1,10 +1,12 @@
 import { ReasoningFunctionsType } from "@/app/utils/types";
 
 interface StandardGraphProps {
+    selectedNode: number,
+    setSelectedNode: (id: number) => void,
     reasoning_functions: ReasoningFunctionsType
 }
 
-export default function StandardGraph( { reasoning_functions }: StandardGraphProps) {
+export default function StandardGraph( { reasoning_functions, selectedNode, setSelectedNode }: StandardGraphProps) {
     
     const { user, forward, backward, refine } = reasoning_functions
 
