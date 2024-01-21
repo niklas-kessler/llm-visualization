@@ -151,6 +151,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         if(selectedNode !== -1){
             node.parents = [selectedNode];
             nodes[selectedNode].children?.push(node.id);
+            node.x = nodes[selectedNode].x;
+            node.y = nodes[selectedNode].y + 5;
         }
         appendNodes([node]);
     }
@@ -172,6 +174,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         if(selectedNode !== -1){
             node.parents = [selectedNode];
             nodes[selectedNode].children?.push(node.id);
+            node.x = nodes[selectedNode].x;
+            node.y = nodes[selectedNode].y + 5;
         }
         appendNodes([node]);        
     }
@@ -239,6 +243,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         if(selectedNode !== -1){
             node.parents = [selectedNode];
             nodes[selectedNode].children?.push(node.id);
+            node.x = nodes[selectedNode].x;
+            node.y = nodes[selectedNode].y + 5;
         }
         appendNodes([node]);
     }
@@ -282,14 +288,17 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const assistant_message3: MessageType = {role: result3.choices[0].message.role, content: result3.choices[0].message.content}
         
         const node_split: Node = new Node({type:"split", x:0, y:0, messages:[], parents: ([selectedNode]), children:[]})
-        const node1: Node = new Node({type:"forward", x:0, y:0, messages:[assistant_message1], parents: ([node_split.id]), children:[]})
-        const node2: Node = new Node({type:"forward", x:0, y:0, messages:[assistant_message2], parents: ([node_split.id]), children:[]})
-        const node3: Node = new Node({type:"forward", x:0, y:0, messages:[assistant_message3], parents: ([node_split.id]), children:[]})
-        node_split.children = [node1.id, node2.id, node3.id]
         if(selectedNode !== -1){
             node_split.parents = [selectedNode];
             nodes[selectedNode].children?.push(node_split.id);
+            node_split.x = nodes[selectedNode].x;
+            node_split.y = nodes[selectedNode].y + 5;
         }
+        const node1: Node = new Node({type:"forward", x:(node_split.x - 5), y:(node_split.y + 5), messages:[assistant_message1], parents: ([node_split.id]), children:[]})
+        const node2: Node = new Node({type:"forward", x:node_split.x, y:(node_split.y + 5), messages:[assistant_message2], parents: ([node_split.id]), children:[]})
+        const node3: Node = new Node({type:"forward", x:(node_split.x + 5), y:(node_split.y + 5), messages:[assistant_message3], parents: ([node_split.id]), children:[]})
+        node_split.children = [node1.id, node2.id, node3.id]
+        
         appendNodes([node_split, node1, node2, node3]);        
     }
 
@@ -317,7 +326,10 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const node: Node = new Node({type: "aggregate", x:0, y:0, messages:[system_message, assistant_message], parents:([selectedNode]), children:[]}) //extend parents to different branches
         if(selectedNode !== -1){
             node.parents = [selectedNode];
-            nodes[selectedNode].children?.push(node.id); //extend children to different branches
+            nodes[selectedNode].children?.push(node.id); //TODO: extend children to different branches
+            //TODO: set x to the middle and y to the maximum of the branches
+            node.x = nodes[selectedNode].x; 
+            node.y = nodes[selectedNode].y + 5;
         }
         appendNodes([node]);
     }
@@ -343,6 +355,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         if(selectedNode !== -1){
             node.parents = [selectedNode];
             nodes[selectedNode].children?.push(node.id);
+            node.x = nodes[selectedNode].x;
+            node.y = nodes[selectedNode].y + 5;
         }
         appendNodes([node]);
     }
