@@ -31,7 +31,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             parents?: number[];
             children?: number[];
         }) {
-            console.log(idCount, Node.idCount_temp)
             this.id = idCount + Node.idCount_temp;
             setIdCount(idCount + Node.idCount_temp + 1);
             Node.idCount_temp++;
@@ -177,24 +176,44 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         appendNodes([node]);        
     }
 
+    function deleteChildren(nodeId: number, nodes: { [id: number]: Node }) {
+        const queue: number[] = [nodeId];
+        const visited: Set<number> = new Set();
+    
+        while (queue.length > 0) {
+            const currNodeId = queue.shift() as number;
+            visited.add(currNodeId);
+    
+            const currNode = nodes[currNodeId];
+            const children = currNode.children ?? [];
+            for (const childId of children) {
+                if (!visited.has(childId)) {
+                    queue.push(childId);
+                }
+            }
+    
+            delete nodes[currNodeId];
+        }
+    }
+
     function reasoning_backward() {
         if (selectedNode === -1) return;
 
         const curr_node = nodes[selectedNode];
-        const parentId = curr_node.parents?.length ? 
-            nodes[curr_node.parents[0]].id 
-            : -1
-        
+        const parentIds = curr_node.parents?.map(parentId => nodes[parentId].id) ?? [];
         let updatedNodes = {...nodes};
         if ( updatedNodes[selectedNode].type === "split"){
-            // TODO: add BFS-algorithm
-            delete updatedNodes[selectedNode];
+            deleteChildren(selectedNode, updatedNodes);
         } else {
             delete updatedNodes[selectedNode];
-            updatedNodes[parentId].children?.splice(updatedNodes[parentId].children?.indexOf(selectedNode) as number, 1);
+            for (const parentId of parentIds) {
+                if (parentId !== -1) {
+                    updatedNodes[parentId].children?.splice(updatedNodes[parentId].children?.indexOf(selectedNode) as number, 1);   
+                }
+            }
         }
         setNodes(updatedNodes);
-        setSelectedNode(parentId);
+        setSelectedNode(parentIds?.length > 0 ? parentIds[0] : -1);
     }
 
     async function reasoning_refine() {
@@ -295,7 +314,32 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const result = await response.json();
         const assistant_message: MessageType = {role: result.choices[0].message.role, content: result.choices[0].message.content}
         
-        const node: Node = new Node({type: "refine", x:0, y:0, messages:[system_message, assistant_message], parents:([selectedNode]), children:[]})
+        const node: Node = new Node({type: "aggregate", x:0, y:0, messages:[system_message, assistant_message], parents:([selectedNode]), children:[]}) //extend parents to different branches
+        if(selectedNode !== -1){
+            node.parents = [selectedNode];
+            nodes[selectedNode].children?.push(node.id); //extend children to different branches
+        }
+        appendNodes([node]);
+    }
+
+    async function reasoning_attention() {
+        const refine_prompt="Reflect about the reasoning steps you have taken. Which were the most important and what have you been able to conclude so far? How can you go on from here to find a solution."
+        const system_message: MessageType = {role: "system", content: refine_prompt}
+
+        // get response
+        const response = await fetch("/api/chatgpt", {
+            method:"POST",
+            headers:{
+            "Content-Type": "application/json",
+            },
+            body:JSON.stringify({
+            messages: [...chatMessages]
+            })
+        });
+        const result = await response.json();
+        const assistant_message: MessageType = {role: result.choices[0].message.role, content: result.choices[0].message.content}
+        
+        const node: Node = new Node({type: "attention", x:0, y:0, messages:[system_message, assistant_message], parents:([selectedNode]), children:[]})
         if(selectedNode !== -1){
             node.parents = [selectedNode];
             nodes[selectedNode].children?.push(node.id);
@@ -309,6 +353,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         backward: reasoning_backward,
         refine: reasoning_refine,
         parallel_split: reasoning_parallel_split,
+        aggregate: reasoning_aggregate,
+        attention: reasoning_attention,
     }
 
     return(

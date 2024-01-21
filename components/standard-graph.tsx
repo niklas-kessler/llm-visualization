@@ -9,7 +9,7 @@ interface StandardGraphProps {
 
 export default function StandardGraph( { nodes, selectedNode, setSelectedNode, reasoning_functions }: StandardGraphProps) {
     
-    const { forward, backward, refine, parallel_split } = reasoning_functions
+    const { forward, backward, refine, parallel_split, aggregate, attention } = reasoning_functions
 
     return(
         <div>
@@ -28,10 +28,10 @@ export default function StandardGraph( { nodes, selectedNode, setSelectedNode, r
                 <button className="border-zinc-600 border-2 rounded-md" onClick={parallel_split}>
                     Parallel Split
                 </button>
-                <button className="border-zinc-600 border-2 rounded-md" onClick={() => console.log("aggregate button")}>
+                <button className="border-zinc-600 border-2 rounded-md" onClick={aggregate}>
                     Aggregate
                 </button>
-                <button className="border-zinc-600 border-2 rounded-md" onClick={() => console.log("attention button")}>
+                <button className="border-zinc-600 border-2 rounded-md" onClick={attention}>
                     Attention
                 </button>
             </div>
