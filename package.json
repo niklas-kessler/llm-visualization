@@ -21,6 +21,7 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@visx/network": "^3.3.0",
     "ai": "^2.2.31",
     "autoprefixer": "^10.4.16",
     "eslint": "^8",

@@ -47,14 +47,14 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
     const initNodes = () => {
         const newNodes: Node[] = [
-            new Node({type:"user", x:0, y:0, messages: [{role:'user', content:'A users compliacted question.'}], children:[2]}),
-            new Node({type:"forward", x:0, y:5, messages: [{role:'assistant', content:'The LLMs initial stupid answer.'}], children:[3], parents:[0]}),
-            new Node({type:"split", x:0, y:10, messages: [], children:[4,5,6], parents:[1]}),
-            new Node({type:"tools", x:-5, y:15, messages: [{role:'system', content:'Make tool-calls to check and improve your answer'},{role:'assistant', content:'Tool-Calls: google(Pandas)'},{role:'system', content:'Those are the tools results: ...'}], children:[7], parents:[2]}),
-            new Node({type:"forward", x:0, y:15, messages: [{role:'assistant', content:'Another reasoning step'}], children:[7], parents:[2]}),
-            new Node({type:"forward", x:5, y:15, messages: [{role:'assistant', content:'Another reasoning step'}], children:[7], parents:[2]}),
-            new Node({type:"aggregate", x:0, y:20, messages: [{role:'system', content:'Aggregate the previous steps'},{role:'assistant', content:'Most prompisin seems the answer from google, indicating that ...'}], children:[8], parents:[3,4,5]}),
-            new Node({type:"final", x:0, y:20, messages: [{role:'system', content:'Based on all the reasoning steps, give a final improved answer'},{role:'assistant', content:'Final answer: ...'}], children:[], parents:[6]}),
+            new Node({type:"user", x:0, y:0, messages: [{role:'user', content:'A users compliacted question.'}], children:[1]}),
+            new Node({type:"forward", x:0, y:50, messages: [{role:'assistant', content:'The LLMs initial stupid answer.'}], children:[2], parents:[0]}),
+            new Node({type:"split", x:0, y:100, messages: [], children:[3,4,5], parents:[1]}),
+            new Node({type:"tools", x:-50, y:150, messages: [{role:'system', content:'Make tool-calls to check and improve your answer'},{role:'assistant', content:'Tool-Calls: google(Pandas)'},{role:'system', content:'Those are the tools results: ...'}], children:[6], parents:[2]}),
+            new Node({type:"forward", x:0, y:150, messages: [{role:'assistant', content:'Another reasoning step'}], children:[6], parents:[2]}),
+            new Node({type:"forward", x:50, y:150, messages: [{role:'assistant', content:'Another reasoning step'}], children:[6], parents:[2]}),
+            new Node({type:"aggregate", x:0, y:200, messages: [{role:'system', content:'Aggregate the previous steps'},{role:'assistant', content:'Most prompisin seems the answer from google, indicating that ...'}], children:[7], parents:[3,4,5]}),
+            new Node({type:"final", x:0, y:250, messages: [{role:'system', content:'Based on all the reasoning steps, give a final improved answer'},{role:'assistant', content:'Final answer: ...'}], children:[], parents:[6]}),
             ];
         let nodeDict: {[id:number]:Node} = {};
         

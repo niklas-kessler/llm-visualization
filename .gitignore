@@ -36,4 +36,3 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 app/utils/toollama_backend.py
-components/graph-standard-graph.tsx

@@ -1,4 +1,5 @@
 import { ReasoningFunctionsType, Node } from "@/app/utils/types";
+import GraphStandardGraph from "./graph-standard-graph";
 
 interface StandardGraphProps {
     nodes: { [id: number]: Node },
@@ -35,6 +36,7 @@ export default function StandardGraph( { nodes, selectedNode, setSelectedNode, r
                     Attention
                 </button>
             </div>
+            <GraphStandardGraph nodes={nodes}/>
         </div>
     );
 }
