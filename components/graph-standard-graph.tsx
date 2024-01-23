@@ -1,14 +1,7 @@
  /* eslint-disable react/no-unstable-nested-components */
 import React from 'react';
-import { MessageType, Node } from '@/app/utils/types';
-
+import { GraphNode, GraphLink, Node } from '@/app/utils/types';
 import { DefaultNode, Graph } from '@visx/network';
-
-interface CustomLink {
-  source: Node;
-  target: Node;
-  dashed?: boolean;
-}
 
 export type GraphSGProps = {  
   nodes: { [id: number]: Node },
@@ -23,13 +16,33 @@ export default function GraphSG({ nodes }: GraphSGProps) {
   const height = 500;
 
   // map nodes dict to array
-  const nodesArr = Object.values(nodes)
+  const nodesArr = Object.values(nodes).map((node) => {
+    return {
+      ...node,
+      x: Math.random() * width / 2,
+      y: Math.random() * height,
+    } as GraphNode;
+  });
+
+  //mapping parents and children to ids
+  for (const value of nodesArr) {
+    if (value.parents !== undefined) {
+      value.parents = value.parents.map((parent) => nodes[parent].id);
+    }
+    if (value.children !== undefined) {
+      value.children = value.children.map((child) => nodes[child].id);
+    }
+  }
+  console.log(nodesArr)
 
   // map nodes dict to array of links
   const linksArr = []
-  for (const [_, value] of Object.entries(nodes)) {
+  for (const value of nodesArr) {
     for (const child of value.children ?? []) {
-      linksArr.push({ source: value, target: nodes[child] });
+      linksArr.push({ 
+        source: value, 
+        target: nodesArr[child] 
+      });
     };
   }
 
@@ -42,7 +55,7 @@ export default function GraphSG({ nodes }: GraphSGProps) {
       <div className='flex justify-center pt-2'>
         <svg width={width} height={height}>
         <rect className='w-full h-full rounded-sm' rx={14} fill={background} />
-        <Graph<CustomLink, Node>
+        <Graph<GraphLink, GraphNode>
           graph={graph}
           top={20}
           left={width / 2}

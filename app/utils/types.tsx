@@ -21,6 +21,17 @@ export interface ReasoningFunctionsType {
 export interface Node {
     id: number;
     type: "user" | "forward" | "tools" | "split" | "aggregate" | "refine" | "attention" | "final";
+    messages: MessageType[];
+    parents?: number[];
+    children?: number[];
+    level: () => number;
+    leaf: () => boolean;
+    head: () => boolean;
+}
+
+export interface GraphNode {
+    id: number;
+    type: "user" | "forward" | "tools" | "split" | "aggregate" | "refine" | "attention" | "final";
     x: number;
     y: number;
     messages: MessageType[];
@@ -28,4 +39,10 @@ export interface Node {
     children?: number[];
     leaf: () => boolean;
     head: () => boolean;
+}
+
+export interface GraphLink {
+    source: GraphNode;
+    target: GraphNode;
+    dashed?: boolean;
 }

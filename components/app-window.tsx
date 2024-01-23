@@ -15,18 +15,15 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         static idCount_temp = 0;    //temporal counter until compoment is being refreshed, which will 1. update idCount: useState<number> and 2. reset this temporal counter
         id: number;
         type: "user" | "forward" | "tools" | "split" | "aggregate" | "refine" | "attention" | "final";
-        x: number;
-        y: number;
         messages: MessageType[];
         parents?: number[];
         children?: number[];
+        level: () => number;
         leaf: () => boolean;
         head: () => boolean;
         
-        constructor({ type, x, y, messages, parents, children }: {
+        constructor({ type, messages, parents, children }: {
             type: "user" | "forward" | "tools" | "split" | "aggregate" | "refine" | "attention" | "final";
-            x: number;
-            y: number;
             messages: MessageType[];
             parents?: number[];
             children?: number[];
@@ -35,8 +32,13 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             setIdCount(idCount + Node.idCount_temp + 1);
             Node.idCount_temp++;
             this.type = type;
-            this.x = x;
-            this.y = y;
+            //maximum level of parents + 1
+            this.level = () => {
+                if (this.parents === undefined) {
+                    return 0;
+                }
+                return Math.max(...this.parents.map(parentId => nodes[parentId]?.level())) + 1;
+            }
             this.messages = messages;
             this.parents = parents;
             this.children = children;
@@ -47,14 +49,14 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
     const initNodes = () => {
         const newNodes: Node[] = [
-            new Node({type:"user", x:0, y:0, messages: [{role:'user', content:'A users compliacted question.'}], children:[1]}),
-            new Node({type:"forward", x:0, y:50, messages: [{role:'assistant', content:'The LLMs initial stupid answer.'}], children:[2], parents:[0]}),
-            new Node({type:"split", x:0, y:100, messages: [], children:[3,4,5], parents:[1]}),
-            new Node({type:"tools", x:-50, y:150, messages: [{role:'system', content:'Make tool-calls to check and improve your answer'},{role:'assistant', content:'Tool-Calls: google(Pandas)'},{role:'system', content:'Those are the tools results: ...'}], children:[6], parents:[2]}),
-            new Node({type:"forward", x:0, y:150, messages: [{role:'assistant', content:'Another reasoning step'}], children:[6], parents:[2]}),
-            new Node({type:"forward", x:50, y:150, messages: [{role:'assistant', content:'Another reasoning step'}], children:[6], parents:[2]}),
-            new Node({type:"aggregate", x:0, y:200, messages: [{role:'system', content:'Aggregate the previous steps'},{role:'assistant', content:'Most prompisin seems the answer from google, indicating that ...'}], children:[7], parents:[3,4,5]}),
-            new Node({type:"final", x:0, y:250, messages: [{role:'system', content:'Based on all the reasoning steps, give a final improved answer'},{role:'assistant', content:'Final answer: ...'}], children:[], parents:[6]}),
+            new Node({type:"user", messages: [{role:'user', content:'A users compliacted question.'}], children:[1]}),
+            new Node({type:"forward", messages: [{role:'assistant', content:'The LLMs initial stupid answer.'}], children:[2], parents:[0]}),
+            new Node({type:"split", messages: [], children:[3,4,5], parents:[1]}),
+            new Node({type:"tools", messages: [{role:'system', content:'Make tool-calls to check and improve your answer'},{role:'assistant', content:'Tool-Calls: google(Pandas)'},{role:'system', content:'Those are the tools results: ...'}], children:[6], parents:[2]}),
+            new Node({type:"forward", messages: [{role:'assistant', content:'Another reasoning step'}], children:[6], parents:[2]}),
+            new Node({type:"forward", messages: [{role:'assistant', content:'Another reasoning step'}], children:[6], parents:[2]}),
+            new Node({type:"aggregate", messages: [{role:'system', content:'Aggregate the previous steps'},{role:'assistant', content:'Most prompisin seems the answer from google, indicating that ...'}], children:[7], parents:[3,4,5]}),
+            new Node({type:"final",  messages: [{role:'system', content:'Based on all the reasoning steps, give a final improved answer'},{role:'assistant', content:'Final answer: ...'}], children:[], parents:[6]}),
             ];
         let nodeDict: {[id:number]:Node} = {};
         
@@ -72,7 +74,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     const [nodes, setNodes] = useState<{ [id: number]: Node }>(initNodes);
 
     console.log("rerender, nodes:", nodes)
-
 
     // update collected messages, triggered when selectedNode is changed
     useEffect(() => {
@@ -147,12 +148,10 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     function reasoning_user(prompt: string) {
         const userMessage: MessageType = {role: "user", content: prompt};            
         
-        const node: Node = new Node({type:"user", x:0, y:0, messages: [userMessage], parents: [], children:[]})
+        const node: Node = new Node({type:"user", messages: [userMessage], parents: [], children:[]})
         if(selectedNode !== -1){
             node.parents = [selectedNode];
             nodes[selectedNode].children?.push(node.id);
-            node.x = nodes[selectedNode].x;
-            node.y = nodes[selectedNode].y + 5;
         }
         appendNodes([node]);
     }
@@ -170,12 +169,10 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const result = await response.json();
         const assistant_message: MessageType = {role: result.choices[0].message.role, content: result.choices[0].message.content}
         
-        const node: Node = new Node({type:"forward", x:0, y:0, messages:[assistant_message], parents: [], children:[]})
+        const node: Node = new Node({type:"forward", messages:[assistant_message], parents: [], children:[]})
         if(selectedNode !== -1){
             node.parents = [selectedNode];
             nodes[selectedNode].children?.push(node.id);
-            node.x = nodes[selectedNode].x;
-            node.y = nodes[selectedNode].y + 5;
         }
         appendNodes([node]);        
     }
@@ -239,12 +236,10 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const result = await response.json();
         const assistant_message: MessageType = {role: result.choices[0].message.role, content: result.choices[0].message.content}
         
-        const node: Node = new Node({type: "refine", x:0, y:0, messages:[system_message, assistant_message], parents:([selectedNode]), children:[]})
+        const node: Node = new Node({type: "refine",  messages:[system_message, assistant_message], parents:([selectedNode]), children:[]})
         if(selectedNode !== -1){
             node.parents = [selectedNode];
             nodes[selectedNode].children?.push(node.id);
-            node.x = nodes[selectedNode].x;
-            node.y = nodes[selectedNode].y + 5;
         }
         appendNodes([node]);
     }
@@ -287,16 +282,14 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const assistant_message2: MessageType = {role: result2.choices[0].message.role, content: result2.choices[0].message.content}
         const assistant_message3: MessageType = {role: result3.choices[0].message.role, content: result3.choices[0].message.content}
         
-        const node_split: Node = new Node({type:"split", x:0, y:0, messages:[], parents: ([selectedNode]), children:[]})
+        const node_split: Node = new Node({type:"split", messages:[], parents: ([selectedNode]), children:[]})
         if(selectedNode !== -1){
             node_split.parents = [selectedNode];
             nodes[selectedNode].children?.push(node_split.id);
-            node_split.x = nodes[selectedNode].x;
-            node_split.y = nodes[selectedNode].y + 5;
         }
-        const node1: Node = new Node({type:"forward", x:(node_split.x - 5), y:(node_split.y + 5), messages:[assistant_message1], parents: ([node_split.id]), children:[]})
-        const node2: Node = new Node({type:"forward", x:node_split.x, y:(node_split.y + 5), messages:[assistant_message2], parents: ([node_split.id]), children:[]})
-        const node3: Node = new Node({type:"forward", x:(node_split.x + 5), y:(node_split.y + 5), messages:[assistant_message3], parents: ([node_split.id]), children:[]})
+        const node1: Node = new Node({type:"forward", messages:[assistant_message1], parents: ([node_split.id]), children:[]})
+        const node2: Node = new Node({type:"forward", messages:[assistant_message2], parents: ([node_split.id]), children:[]})
+        const node3: Node = new Node({type:"forward", messages:[assistant_message3], parents: ([node_split.id]), children:[]})
         node_split.children = [node1.id, node2.id, node3.id]
         
         appendNodes([node_split, node1, node2, node3]);        
@@ -323,13 +316,10 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const result = await response.json();
         const assistant_message: MessageType = {role: result.choices[0].message.role, content: result.choices[0].message.content}
         
-        const node: Node = new Node({type: "aggregate", x:0, y:0, messages:[system_message, assistant_message], parents:([selectedNode]), children:[]}) //extend parents to different branches
+        const node: Node = new Node({type: "aggregate", messages:[system_message, assistant_message], parents:([selectedNode]), children:[]}) //extend parents to different branches
         if(selectedNode !== -1){
             node.parents = [selectedNode];
             nodes[selectedNode].children?.push(node.id); //TODO: extend children to different branches
-            //TODO: set x to the middle and y to the maximum of the branches
-            node.x = nodes[selectedNode].x; 
-            node.y = nodes[selectedNode].y + 5;
         }
         appendNodes([node]);
     }
@@ -351,12 +341,10 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const result = await response.json();
         const assistant_message: MessageType = {role: result.choices[0].message.role, content: result.choices[0].message.content}
         
-        const node: Node = new Node({type: "attention", x:0, y:0, messages:[system_message, assistant_message], parents:([selectedNode]), children:[]})
+        const node: Node = new Node({type: "attention", messages:[system_message, assistant_message], parents:([selectedNode]), children:[]})
         if(selectedNode !== -1){
             node.parents = [selectedNode];
             nodes[selectedNode].children?.push(node.id);
-            node.x = nodes[selectedNode].x;
-            node.y = nodes[selectedNode].y + 5;
         }
         appendNodes([node]);
     }
