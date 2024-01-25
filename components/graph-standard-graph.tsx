@@ -16,7 +16,7 @@ export default function GraphSG({ nodes }: GraphSGProps) {
   const height = 500;
 
   const nodesByLevel = Object.values(nodes).reduce((groups, node) => {
-    const key = node.level();
+    const key = node.level(nodes);
     if (!groups[key]) {
         groups[key] = [];
     }
@@ -99,7 +99,7 @@ export default function GraphSG({ nodes }: GraphSGProps) {
         // print level of each node
         console.log("Refresh levels");
         for (const node of Object.values(nodes)) {
-          console.log(node.level());
+          console.log(node.level(nodes));
         }
       }}>Refresh levels</button>
       </div>

@@ -39,12 +39,12 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             this.head = () => (this.parents?.length ?? 0) === 0;
         }
 
-        level(this: Node): number {
+        level(this: Node, nodes: { [id:number]: Node}): number {
             if (this.parents === undefined) {
                 return 0;
             }
             console.log("inside level", nodes)
-            const parentNodes = this.parents?.map((parentId: number) => nodes[parentId]?.level());
+            const parentNodes = this.parents?.map((parentId: number) => nodes[parentId]?.level(nodes));
             return Math.max(...parentNodes) + 1;
         }    
     }
@@ -77,7 +77,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
     console.log("rerender, nodes:", nodes)
     // print level of nodes
-    console.log("level of nodes:", Object.values(nodes).map(node => node.level()));
+    console.log("level of nodes:", Object.values(nodes).map(node => node.level(nodes)));
 
     // update collected messages, triggered when selectedNode is changed
     useEffect(() => {

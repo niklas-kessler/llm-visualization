@@ -24,7 +24,7 @@ export interface Node {
     messages: MessageType[];
     parents?: number[];
     children?: number[];
-    level: () => number;
+    level: (nodes: { [id:number]: Node}) => number;
     leaf: () => boolean;
     head: () => boolean;
 }
