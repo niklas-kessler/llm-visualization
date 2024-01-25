@@ -40,10 +40,9 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         }
 
         level(this: Node, nodes: { [id:number]: Node}): number {
-            if (this.parents === undefined) {
+            if (this.parents === undefined || this.parents.length === 0) {
                 return 0;
             }
-            console.log("inside level", nodes)
             const parentNodes = this.parents?.map((parentId: number) => nodes[parentId]?.level(nodes));
             return Math.max(...parentNodes) + 1;
         }    
@@ -55,6 +54,14 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             new Node({type:"forward", messages: [{role:'assistant', content:'The LLMs initial stupid answer.'}], children:[2], parents:[0]}),
             new Node({type:"split", messages: [], children:[3,4,5], parents:[1]}),
             new Node({type:"tools", messages: [{role:'system', content:'Make tool-calls to check and improve your answer'},{role:'assistant', content:'Tool-Calls: google(Pandas)'},{role:'system', content:'Those are the tools results: ...'}], children:[6], parents:[2]}),
+            /*new Node({type:"split", messages: [], children:[6,7,8], parents:[2]}),            
+            new Node({type:"split", messages: [], children:[9,10,11], parents:[2]}),            
+            new Node({type:"forward", messages: [{role:'assistant', content:'Test'}], children:[], parents:[4]}),
+            new Node({type:"forward", messages: [{role:'assistant', content:'Test'}], children:[], parents:[4]}),
+            new Node({type:"forward", messages: [{role:'assistant', content:'Test'}], children:[], parents:[4]}),
+            new Node({type:"forward", messages: [{role:'assistant', content:'Test'}], children:[], parents:[5]}),
+            new Node({type:"forward", messages: [{role:'assistant', content:'Test'}], children:[], parents:[5]}),
+            new Node({type:"forward", messages: [{role:'assistant', content:'Test'}], children:[], parents:[5]}),*/
             new Node({type:"forward", messages: [{role:'assistant', content:'Another reasoning step'}], children:[6], parents:[2]}),
             new Node({type:"forward", messages: [{role:'assistant', content:'Another reasoning step'}], children:[6], parents:[2]}),
             new Node({type:"aggregate", messages: [{role:'system', content:'Aggregate the previous steps'},{role:'assistant', content:'Most prompisin seems the answer from google, indicating that ...'}], children:[7], parents:[3,4,5]}),
@@ -98,9 +105,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         let aggregated = 0; // depth-level
 
         // backtrack to beginning, collect important nodes on the fly
-        let i = 0
-        while (!node.head() && i < 3) {
-            i++;
+        while (!node.head()) {
             // (2) continue, when split of branches is reached
             console.log("continue collectChat here (unfinished), current node:", node)
             /// (3) place this code in the middle, to include the split and the aggregate nodes themselves

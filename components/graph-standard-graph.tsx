@@ -1,8 +1,6 @@
  /* eslint-disable react/no-unstable-nested-components */
-import React, { useEffect } from 'react';
 import { GraphNode, GraphLink, Node } from '@/app/utils/types';
-import { DefaultNode, Graph } from '@visx/network';
-import { useState } from 'react';
+import { Graph } from '@visx/network';
 
 export type GraphSGProps = {  
   nodes: { [id: number]: Node },
@@ -14,6 +12,54 @@ export const background = '#272b4d';
 export default function GraphSG({ nodes }: GraphSGProps) {
   const width = 500;
   const height = 500;
+
+  //function, to map the types of nodes to strings
+  const node_text = (type: string) => {
+    switch (type) {
+      case "user":
+        return "U";
+      case "forward":
+        return "\u2193";
+      case "tools":
+        return "T";
+      case "split":
+        return "\u2199 \u2193 \u2198"; // Unicode character for a two-way arrow pointing down
+      case "aggregate":
+        return "\u2198 \u2193 \u2199";
+      case "refine":
+        return "\u21BB";
+      case "attention":
+        return "?";
+      case "final":
+        return "Final";
+      default:
+        return "Default";
+    }
+  }
+
+  //function, to map the types of nodes to colors
+  const node_color = (type: string) => {
+    switch (type) {
+      case "user":
+        return "#4169E1"; // Royal Blue
+      case "forward":
+        return "#108c4f"; // Dark Sea Green
+      case "tools":
+        return "#02d002"; // Lime Green
+      case "split":
+        return "#ffa500"; // Orange
+      case "aggregate":
+        return "#ffa500"; // Orange
+      case "refine":
+        return "#9932cc"; // Dark Orchid
+      case "attention":
+        return "#ff7f50"; // Coral
+      case "final":
+        return "#8b4513"; // Saddle Brown
+      default:
+         return "#ff0000"; // Default: Alert Red
+    }
+  }
 
   const nodesByLevel = Object.values(nodes).reduce((groups, node) => {
     const key = node.level(nodes);
@@ -60,10 +106,12 @@ export default function GraphSG({ nodes }: GraphSGProps) {
   const linksArr = []
   for (const value of nodesArr) {
     for (const child of value.children ?? []) {
-      linksArr.push({ 
-        source: value, 
-        target: nodesArr[child] 
-      });
+      if(nodesArr.find(node => node.id === child) !== undefined) {
+        linksArr.push({ 
+          source: value, 
+          target: nodesArr.find(node => node.id === child)
+        });
+      }
     };
   }
 
@@ -92,16 +140,21 @@ export default function GraphSG({ nodes }: GraphSGProps) {
               strokeDasharray={dashed ? '8,4' : undefined}
             />
           )}
-          nodeComponent={() => <DefaultNode />}
+          nodeComponent={({ node }) => 
+            <g>
+              <circle
+                r={20}
+                fill="lightgrey"
+                stroke={node_color(node.type)}
+                strokeWidth={6}
+              />
+              <text fontSize="10px" textAnchor="middle">
+                {node_text(node.type)}
+              </text>
+            </g>
+        }
         />
       </svg>
-      <button onClick={() => {
-        // print level of each node
-        console.log("Refresh levels");
-        for (const node of Object.values(nodes)) {
-          console.log(node.level(nodes));
-        }
-      }}>Refresh levels</button>
       </div>
     );
   }
