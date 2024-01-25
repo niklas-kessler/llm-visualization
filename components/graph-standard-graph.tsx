@@ -1,7 +1,8 @@
  /* eslint-disable react/no-unstable-nested-components */
-import React from 'react';
+import React, { useEffect } from 'react';
 import { GraphNode, GraphLink, Node } from '@/app/utils/types';
 import { DefaultNode, Graph } from '@visx/network';
+import { useState } from 'react';
 
 export type GraphSGProps = {  
   nodes: { [id: number]: Node },
@@ -11,12 +12,33 @@ export type GraphSGProps = {
 export const background = '#272b4d';
 
 export default function GraphSG({ nodes }: GraphSGProps) {
-    
   const width = 500;
   const height = 500;
 
-  // map nodes dict to array
-  const nodesArr = Object.values(nodes).map((node) => {
+  const nodesByLevel = Object.values(nodes).reduce((groups, node) => {
+    const key = node.level();
+    if (!groups[key]) {
+        groups[key] = [];
+    }
+    groups[key].push(node);
+    return groups;
+  }, {} as { [key: string]: Node[] });
+
+  let nodesArr: GraphNode[] = [];
+  for (const key in nodesByLevel) {
+    const n_nodes = nodesByLevel[key].length;
+    //set x and y coordinates for each node 
+    for (let i = 0; i < n_nodes; i++) {
+      const node = nodesByLevel[key][i];
+      const x = (i - (n_nodes - 1) / 2) * width / (n_nodes + 1);
+      const numLevels = Object.keys(nodesByLevel).length;
+      const y = parseInt(key) * height / numLevels;
+      const graphNode = { ...node, x, y } as GraphNode;
+      nodesArr.push(graphNode);
+    }
+  }
+
+   Object.values(nodes).map((node) => {
     return {
       ...node,
       x: Math.random() * width / 2,
@@ -33,7 +55,6 @@ export default function GraphSG({ nodes }: GraphSGProps) {
       value.children = value.children.map((child) => nodes[child].id);
     }
   }
-  console.log(nodesArr)
 
   // map nodes dict to array of links
   const linksArr = []
@@ -74,6 +95,13 @@ export default function GraphSG({ nodes }: GraphSGProps) {
           nodeComponent={() => <DefaultNode />}
         />
       </svg>
+      <button onClick={() => {
+        // print level of each node
+        console.log("Refresh levels");
+        for (const node of Object.values(nodes)) {
+          console.log(node.level());
+        }
+      }}>Refresh levels</button>
       </div>
     );
   }

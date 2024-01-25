@@ -18,7 +18,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         messages: MessageType[];
         parents?: number[];
         children?: number[];
-        level: () => number;
         leaf: () => boolean;
         head: () => boolean;
         
@@ -33,18 +32,21 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             Node.idCount_temp++;
             this.type = type;
             //maximum level of parents + 1
-            this.level = () => {
-                if (this.parents === undefined) {
-                    return 0;
-                }
-                return Math.max(...this.parents.map(parentId => nodes[parentId]?.level())) + 1;
-            }
             this.messages = messages;
             this.parents = parents;
             this.children = children;
             this.leaf = () => (this.children?.length ?? 0) === 0;
-            this.head = () => (this.parents?.length ?? 0) === 0
+            this.head = () => (this.parents?.length ?? 0) === 0;
         }
+
+        level(this: Node): number {
+            if (this.parents === undefined) {
+                return 0;
+            }
+            console.log("inside level", nodes)
+            const parentNodes = this.parents?.map((parentId: number) => nodes[parentId]?.level());
+            return Math.max(...parentNodes) + 1;
+        }    
     }
 
     const initNodes = () => {
@@ -74,21 +76,14 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     const [nodes, setNodes] = useState<{ [id: number]: Node }>(initNodes);
 
     console.log("rerender, nodes:", nodes)
+    // print level of nodes
+    console.log("level of nodes:", Object.values(nodes).map(node => node.level()));
 
     // update collected messages, triggered when selectedNode is changed
     useEffect(() => {
         collectChat();
     }, [selectedNode])
 
-/**
-    function appendMessage (newMessages: MessageType[]) {
-        let updatedMessages = [...chatMessages];
-        for (let m of newMessages){
-            updatedMessages.push(m);
-        }
-        setChatMessages(updatedMessages)
-    }
- */
     function collectChat () : void {
         if (selectedNode === -1) {
             setChatMessages([]);
@@ -281,7 +276,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const assistant_message1: MessageType = {role: result1.choices[0].message.role, content: result1.choices[0].message.content}
         const assistant_message2: MessageType = {role: result2.choices[0].message.role, content: result2.choices[0].message.content}
         const assistant_message3: MessageType = {role: result3.choices[0].message.role, content: result3.choices[0].message.content}
-        
+
         const node_split: Node = new Node({type:"split", messages:[], parents: ([selectedNode]), children:[]})
         if(selectedNode !== -1){
             node_split.parents = [selectedNode];
