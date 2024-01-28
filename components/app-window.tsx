@@ -46,6 +46,42 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             const parentNodes = this.parents?.map((parentId: number) => nodes[parentId]?.level(nodes));
             return Math.max(...parentNodes) + 1;
         }    
+
+        // find the aggregate node that aggregates the current branch with the other two that are on the same level
+        findAggregate(this: Node, nodes: { [id:number]: Node}): Node | undefined {
+            let curr_node = this;
+            let splits = 0;
+
+            // until leaf
+            while (!curr_node.leaf()){
+                if(curr_node.type === "split") splits++;
+                if(curr_node.type === "aggregate") splits--;
+                if(splits === 0) return curr_node;
+                curr_node = nodes[curr_node.children?.[0] as number];
+            }
+
+            // once more for the leaf
+            if (curr_node.type === "aggregate") splits--;
+            if (splits === 0) return curr_node;
+            return undefined;
+        }
+
+        // find the split node that generated the current branch
+        findSplit(this: Node, nodes: { [id:number]: Node}): Node | undefined {
+            let curr_node = this;
+            let aggregates = 1;
+            while (!curr_node.head()){
+                if(curr_node.type === "aggregate") aggregates++;
+                if(curr_node.type === "split") aggregates--;
+                if(aggregates === 0) return curr_node;
+                curr_node = nodes[curr_node.parents?.[0] as number];
+            }
+
+            // once more for the head
+            if(curr_node.type === "split") aggregates--;
+            if(aggregates === 0) return curr_node;
+            return undefined;
+        }
     }
 
     const initNodes = () => {
@@ -91,13 +127,13 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         collectChat();
     }, [selectedNode])
 
-    function collectChat () : void {
-        if (selectedNode === -1) {
+    function collectChat ( nodeId: number = selectedNode ) : MessageType[] {
+        if (nodeId === -1) {
             setChatMessages([]);
-            return;
+            return [];
         }
         
-        let node: Node = nodes[selectedNode];
+        let node: Node = nodes[nodeId];
         let prevNode: Node;
         let messageNodes: Node[] = [];
         let chatMessages: MessageType[] = [];
@@ -133,6 +169,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             }
         }
         setChatMessages(chatMessages);
+        return chatMessages;
     }
 
     function appendNodes (newNodes: Node[]) {
@@ -220,6 +257,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
     async function reasoning_refine() {
         
+        if (selectedNode === -1) return;
+
         // system prompt
         const refine_prompt="Please overthink your previous answer. Is there anything incorrect"
         const system_message: MessageType = {role: "system", content: refine_prompt}
@@ -296,36 +335,102 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         appendNodes([node_split, node1, node2, node3]);        
     }
 
+            
     async function reasoning_aggregate() {
-        
-        // TODO: Collect branches and augment messageNodes with them
+        if (selectedNode === -1) return;
 
-        // system prompt
-        const refine_prompt="In 3 different reasoning steps, you have come to 3 different answers. Please overthink. Which one is the most promising and accurate? How can you combine and summarize them?"
-        const system_message: MessageType = {role: "system", content: refine_prompt}
+        let split_node = nodes[selectedNode].findSplit(nodes);
+        if (split_node === undefined) return;
 
-        // get response
-        const response = await fetch("/api/chatgpt", {
-            method:"POST",
-            headers:{
-            "Content-Type": "application/json",
-            },
-            body:JSON.stringify({
-            messages: [...chatMessages]
-            })
-        });
-        const result = await response.json();
-        const assistant_message: MessageType = {role: result.choices[0].message.role, content: result.choices[0].message.content}
-        
-        const node: Node = new Node({type: "aggregate", messages:[system_message, assistant_message], parents:([selectedNode]), children:[]}) //extend parents to different branches
-        if(selectedNode !== -1){
-            node.parents = [selectedNode];
-            nodes[selectedNode].children?.push(node.id); //TODO: extend children to different branches
+        async function aggregate(node: Node) {
+            if (node.type !== "split")
+                return;
+            
+            let branches: MessageType[][] = [];
+            let leaves: number[] = [];
+            
+            // collect branches independently
+            for (let childId of node.children ?? []) {
+                let curr_node = nodes[childId];
+                let branch: MessageType[] = [];
+            
+                // until leaf
+                while(!curr_node.leaf()) {
+                    // further inner split
+                    if (curr_node.type === "split") {
+
+                        // already aggregated
+                        if (curr_node.findAggregate(nodes)) {
+                            curr_node = curr_node.findAggregate(nodes) as Node; // skip inner split-aggregate structure
+                        } 
+                        // not yet aggregated
+                        else {
+                            branch.push(...curr_node.messages); // redundant (split nodes usually have no messages)
+                            aggregate(curr_node); // recursive call
+                        }
+
+                    // else collect and move on
+                    } else{
+                        branch.push(...curr_node.messages);
+                        curr_node = nodes[curr_node.children?.[0] as number]; // [0] because non-split nodes have only one child
+                    }
+                }
+                branch.push(...curr_node.messages); // add messages of leaf itself
+
+                // branch completely collected
+                branches.push(branch);
+                leaves.push(curr_node.id);
+            }
+            
+            // get response
+            const aggregate_prompt="You have seen the task and previous reasoning steps. From here, I have let you generate three independent reasoning chains. I will give you each generated reasoning chain in the following and we will call them branch 1, branch 2 and branch 3."
+            const aggregate_prompt_branch1="The following steps all belong to branch 1."
+            const aggregate_prompt_branch2="The following steps all belong to branch 2."
+            const aggregate_prompt_branch3="The following steps all belong to branch 3."
+            const aggregate_prompt_closing = "This have been the reasoning chains. Please overthink. Which one is the most promising and accurate? How can you combine and summarize them?"
+            const messages_before_split = collectChat((split_node as Node).id);
+            const system_message_aggregate: MessageType = {role: "system", content: aggregate_prompt}
+            const system_message_aggregate_branch1: MessageType = {role: "system", content: aggregate_prompt_branch1}
+            const system_message_aggregate_branch2: MessageType = {role: "system", content: aggregate_prompt_branch2}
+            const system_message_aggregate_branch3: MessageType = {role: "system", content: aggregate_prompt_branch3}
+            const system_message_aggregate_closing: MessageType = {role: "system", content: aggregate_prompt_closing}
+            const messages = 
+                [...messages_before_split, 
+                system_message_aggregate, 
+                system_message_aggregate_branch1, 
+                ...branches[0], 
+                system_message_aggregate_branch2, 
+                ...branches[1], 
+                system_message_aggregate_branch3, 
+                ...branches[2], 
+                system_message_aggregate_closing
+            ]
+
+            const response = await fetch("/api/chatgpt", {
+                method:"POST",
+                headers:{
+                "Content-Type": "application/json",
+                },
+                body:JSON.stringify({
+                messages: messages
+                })
+            });
+            const result = await response.json();
+            const system_message_explain_aggregate: MessageType = {role: "system", content: "Summarizing three different reasoning chains, the following highlights the most important results."}
+            const assistant_message: MessageType = {role: result.choices[0].message.role, content: result.choices[0].message.content}
+            const aggregate_node: Node = new Node({type: "aggregate", messages:[system_message_explain_aggregate, assistant_message], parents:([...leaves]), children:[]})
+            for (let leaf of leaves) {
+                nodes[leaf].children?.push(aggregate_node.id);
+            }
+            appendNodes([aggregate_node]);
         }
-        appendNodes([node]);
+
+        await aggregate(split_node);        
     }
 
     async function reasoning_attention() {
+        if (selectedNode === -1) return;
+
         const refine_prompt="Reflect about the reasoning steps you have taken. Which were the most important and what have you been able to conclude so far? How can you go on from here to find a solution."
         const system_message: MessageType = {role: "system", content: refine_prompt}
 

@@ -27,6 +27,8 @@ export interface Node {
     level: (nodes: { [id:number]: Node}) => number;
     leaf: () => boolean;
     head: () => boolean;
+    findAggregate: (nodes: { [id: number]: Node }) => Node | undefined;
+    findSplit: (nodes: { [id: number]: Node }) => Node | undefined;
 }
 
 export interface GraphNode {
