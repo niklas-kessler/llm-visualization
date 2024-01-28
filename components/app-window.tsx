@@ -205,14 +205,15 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         let updatedNodes = {...nodes};
         if ( updatedNodes[selectedNode].type === "split"){
             deleteChildren(selectedNode, updatedNodes);
-        } else {
-            delete updatedNodes[selectedNode];
-            for (const parentId of parentIds) {
-                if (parentId !== -1) {
-                    updatedNodes[parentId].children?.splice(updatedNodes[parentId].children?.indexOf(selectedNode) as number, 1);   
-                }
+        } 
+        
+        delete updatedNodes[selectedNode];
+        for (const parentId of parentIds) {
+            if (parentId !== -1) {
+                updatedNodes[parentId].children?.splice(updatedNodes[parentId].children?.indexOf(selectedNode) as number, 1);   
             }
         }
+
         setNodes(updatedNodes);
         setSelectedNode(parentIds?.length > 0 ? parentIds[0] : -1);
     }
