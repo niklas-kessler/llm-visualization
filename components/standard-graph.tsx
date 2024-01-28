@@ -44,7 +44,7 @@ export default function StandardGraph( { nodes, selectedNode, setSelectedNode, r
                 
             </div>
 
-            <GraphStandardGraph nodes={nodes} selectedNode={selectedNode}/>
+            <GraphStandardGraph nodes={nodes} selectedNode={selectedNode} setSelectedNode={setSelectedNode}/>
         </div>
     );
 }

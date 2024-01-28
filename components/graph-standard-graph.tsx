@@ -5,13 +5,14 @@ import { node_color, node_text } from '@/app/utils/utils';
 
 export type GraphSGProps = {  
   selectedNode: number,
+  setSelectedNode: (id: number) => void,
   nodes: { [id: number]: Node },
 };
 
 
 export const background = '#272b4d';
 
-export default function GraphSG({ nodes, selectedNode }: GraphSGProps) {
+export default function GraphSG({ nodes, selectedNode, setSelectedNode }: GraphSGProps) {
   const width = 500;
   const height = 350;
 
@@ -73,7 +74,10 @@ export default function GraphSG({ nodes, selectedNode }: GraphSGProps) {
   // Node
   function GraphNode({ node }: { node: GraphNode }) {
     return (
-      <g>
+      <g 
+        onClick={() => setSelectedNode(node.id)} // Add onClick event handler
+        style={{ cursor: "pointer" }} // Add cursor style
+      >
         <circle
           r={20}
           fill={selectedNode === node.id ? "#fff" : "#ccb"}

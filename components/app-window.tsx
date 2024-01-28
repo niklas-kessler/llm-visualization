@@ -183,6 +183,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
 
     function reasoning_user(prompt: string) {
+        if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
+
         const userMessage: MessageType = {role: "user", content: prompt};            
         
         const node: Node = new Node({type:"user", messages: [userMessage], parents: [], children:[]})
@@ -193,7 +195,9 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         appendNodes([node]);
     }
 
-    async function reasoning_forward() {        
+    async function reasoning_forward() {
+        if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
+
         const response = await fetch("/api/chatgpt", {
             method:"POST",
             headers:{
@@ -220,6 +224,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     
         while (queue.length > 0) {
             const currNodeId = queue.shift() as number;
+            if (visited.has(currNodeId)) continue;
             visited.add(currNodeId);
     
             const currNode = nodes[currNodeId];
@@ -240,7 +245,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const curr_node = nodes[selectedNode];
         const parentIds = curr_node.parents?.map(parentId => nodes[parentId].id) ?? [];
         let updatedNodes = {...nodes};
-        if ( updatedNodes[selectedNode].type === "split"){
+        if (updatedNodes[selectedNode].children) {
             deleteChildren(selectedNode, updatedNodes);
         } 
         
@@ -256,8 +261,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     }
 
     async function reasoning_refine() {
-        
         if (selectedNode === -1) return;
+        if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
 
         // system prompt
         const refine_prompt="Please overthink your previous answer. Is there anything incorrect"
@@ -285,6 +290,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     }
 
     async function reasoning_parallel_split() {        
+        if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
+
         const response1 = await fetch("/api/chatgpt", {
             method: "POST",
             headers: {
@@ -338,6 +345,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             
     async function reasoning_aggregate() {
         if (selectedNode === -1) return;
+        if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
 
         let split_node = nodes[selectedNode].findSplit(nodes);
         if (split_node === undefined) return;
@@ -430,6 +438,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
     async function reasoning_attention() {
         if (selectedNode === -1) return;
+        if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
 
         const refine_prompt="Reflect about the reasoning steps you have taken. Which were the most important and what have you been able to conclude so far? How can you go on from here to find a solution."
         const system_message: MessageType = {role: "system", content: refine_prompt}
