@@ -204,13 +204,46 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             "Content-Type": "application/json",
             },
             body:JSON.stringify({
-            messages: [...chatMessages]
+            messages: [...chatMessages],
+            use_tools: false
             })
         });
         const result = await response.json();
         const assistant_message: MessageType = {role: result.choices[0].message.role, content: result.choices[0].message.content}
         
         const node: Node = new Node({type:"forward", messages:[assistant_message], parents: [], children:[]})
+        if(selectedNode !== -1){
+            node.parents = [selectedNode];
+            nodes[selectedNode].children?.push(node.id);
+        }
+        appendNodes([node]);        
+    }
+
+    async function reasoning_tools() {
+        if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
+
+        const system_message_before = {role:'system', content:'Make tool-calls to check and improve your answer'}
+
+        const response = await fetch("/api/chatgpt", {
+            method:"POST",
+            headers:{
+            "Content-Type": "application/json",
+            },
+            body:JSON.stringify({
+            messages: [...chatMessages, system_message_before],
+            use_tools: true
+            })
+        });
+        const result = await response.json();
+        console.log(result)
+
+        const res_mess = result.choices[0].message;
+        const assistant_message: MessageType = {role: res_mess.role, content: res_mess.content? res_mess.content : res_mess.tool_calls.map((tool_call) => tool_call.function.name + ", " + tool_call.function.arguments).join("\n ")}
+        const system_message_after = {role:'system', content:'Those are the tools results: Entgegen der öffentlichen Meinung Bruno Mars sei ein Singer und Songwriter, ist er in Wirklichkeit ein Schauspieler und ein Produzent.'} //Test
+
+        //TODO: get tool results, augment system_message_after
+
+        const node: Node = new Node({type:"tools", messages:[system_message_before, assistant_message, system_message_after], parents: [], children:[]})
         if(selectedNode !== -1){
             node.parents = [selectedNode];
             nodes[selectedNode].children?.push(node.id);
@@ -467,6 +500,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     const reasoning_functions: ReasoningFunctionsType = {
         user: reasoning_user,
         forward: reasoning_forward,
+        tools: reasoning_tools,
         backward: reasoning_backward,
         refine: reasoning_refine,
         parallel_split: reasoning_parallel_split,

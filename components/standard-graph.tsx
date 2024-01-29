@@ -11,7 +11,7 @@ interface StandardGraphProps {
 
 export default function StandardGraph( { nodes, selectedNode, setSelectedNode, reasoning_functions }: StandardGraphProps) {
     
-    const { forward, backward, refine, parallel_split, aggregate, attention } = reasoning_functions
+    const { forward, tools, backward, refine, parallel_split, aggregate, attention } = reasoning_functions
 
     return(
         <div>
@@ -19,7 +19,7 @@ export default function StandardGraph( { nodes, selectedNode, setSelectedNode, r
                 <button className="py-1 px-2 rounded-l-md w-14 h-14 border-2 border-black bg-gray-400" onClick={forward}>
                     {node_text("forward")}
                 </button>
-                <button className="py-1 px-2 w-14 h-14 border-2 border-black bg-gray-400" onClick={() => console.log("TODO: implement reasoning_tool")}>
+                <button className="py-1 px-2 w-14 h-14 border-2 border-black bg-gray-400" onClick={tools}>
                     {node_text("tools")}
                 </button>
                 <button className="py-1 px-2 w-14 h-14 border-2 border-black bg-gray-400" onClick={parallel_split}>

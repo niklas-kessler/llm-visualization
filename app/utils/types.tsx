@@ -11,6 +11,7 @@ export interface MessageType {
 export interface ReasoningFunctionsType {
     user: (prompt: string) => void,
     forward: () => void,
+    tools: () => void,
     backward: () => void,
     refine: () => void,
     parallel_split: () => void,
