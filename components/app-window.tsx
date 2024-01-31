@@ -183,7 +183,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
 
     function reasoning_user(prompt: string) {
-        if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
+        if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
 
         const userMessage: MessageType = {role: "user", content: prompt};            
         
@@ -196,7 +196,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     }
 
     async function reasoning_forward() {
-        if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
+        if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
 
         const response = await fetch("/api/chatgpt", {
             method:"POST",
@@ -219,8 +219,9 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         appendNodes([node]);        
     }
 
+
     async function reasoning_tools() {
-        if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
+        if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
 
         const system_message_before = {role:'system', content:'Make tool-calls to check and improve your answer'}
 
@@ -239,16 +240,29 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
         const res_mess = result.choices[0].message;
         const assistant_message: MessageType = {role: res_mess.role, content: res_mess.content? res_mess.content : res_mess.tool_calls.map((tool_call) => tool_call.function.name + ", " + tool_call.function.arguments).join("\n ")}
-        const system_message_after = {role:'system', content:'Those are the tools results: Entgegen der öffentlichen Meinung Bruno Mars sei ein Singer und Songwriter, ist er in Wirklichkeit ein Schauspieler und ein Produzent.'} //Test
-
+        
         //TODO: get tool results, augment system_message_after
+        // Update the system_message_after content with the input
+        const tool_answer = await fetch("/api/simulate_tool", {
+            method: "POST",
+            headers:{
+                "Content-Type": "application/json",
+                },
+            body:JSON.stringify({
+                tool: res_mess.tool_calls[0].function.name,
+                tool_args: res_mess.tool_calls[0].function.arguments
+            })
+        });
+        const tool_result = (await tool_answer.json()).result;
+        
+        const system_message_after = { role: 'system', content: "Tool-response:" + tool_result };
 
-        const node: Node = new Node({type:"tools", messages:[system_message_before, assistant_message, system_message_after], parents: [], children:[]})
-        if(selectedNode !== -1){
+        const node: Node = new Node({ type: "tools", messages: [system_message_before, assistant_message, system_message_after], parents: [], children: [] });
+        if (selectedNode !== -1) {
             node.parents = [selectedNode];
             nodes[selectedNode].children?.push(node.id);
         }
-        appendNodes([node]);        
+        appendNodes([node]);
     }
 
     function deleteChildren(nodeId: number, nodes: { [id: number]: Node }) {
@@ -323,7 +337,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     }
 
     async function reasoning_parallel_split() {        
-        if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
+        if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
 
         const response1 = await fetch("/api/chatgpt", {
             method: "POST",
