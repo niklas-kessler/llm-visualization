@@ -74,8 +74,9 @@ export async function POST(request: NextRequest){
   messages: [...standardMessages, ...messages],
   temperature: 0,
   max_tokens: 128,
-  tools: use_tools? tools : undefined,
-  tool_choice: use_tools? "auto" : undefined,
+  tools: tools, // TODO: think about wether to inform about tools in forward_reasoning
+  //tools: use_tools? tools : undefined,
+  tool_choice: use_tools? "auto" : "none",
   })
   return NextResponse.json(response)
 }

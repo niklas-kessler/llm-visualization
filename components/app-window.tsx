@@ -113,7 +113,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         return nodeDict;
     }
 
-    const [ selectedNode, setSelectedNode ] = useState<number>(-1); // initialize with -1
+    const [selectedNode, setSelectedNode ] = useState<number>(-1); // initialize with -1
     const [chatMessages, setChatMessages] = useState<MessageType[]>([]);
     const [idCount, setIdCount] = useState<number>(0); // use as (idCount + Node.idCount_temp) to get the actual current id
     const [nodes, setNodes] = useState<{ [id: number]: Node }>(initNodes);
@@ -239,23 +239,27 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         console.log(result)
 
         const res_mess = result.choices[0].message;
-        const assistant_message: MessageType = {role: res_mess.role, content: res_mess.content? res_mess.content : res_mess.tool_calls.map((tool_call) => tool_call.function.name + ", " + tool_call.function.arguments).join("\n ")}
+        const assistant_message: MessageType = {role: res_mess.role, content: res_mess.content? res_mess.content : res_mess.tool_calls.map((tool_call: any) => tool_call.function.name + ", " + tool_call.function.arguments).join("\n ")}
+
+        let tool_results_string = "";
+
+        for (let tool_call of res_mess.tool_calls) {
+            const tool_answer = await fetch("/api/simulate_tool", {
+                method: "POST",
+                headers:{
+                    "Content-Type": "application/json",
+                    },
+                body:JSON.stringify({
+                    tool: tool_call.function.name,
+                    tool_args: tool_call.function.arguments
+                })
+            });
+            const tool_result = (await tool_answer.json()).result;
+            tool_results_string += "Tool " + tool_call.function.name + " with arguments " + tool_call.function.arguments + " gave result: " + tool_result + "\n";    
+        }
         
-        //TODO: get tool results, augment system_message_after
-        // Update the system_message_after content with the input
-        const tool_answer = await fetch("/api/simulate_tool", {
-            method: "POST",
-            headers:{
-                "Content-Type": "application/json",
-                },
-            body:JSON.stringify({
-                tool: res_mess.tool_calls[0].function.name,
-                tool_args: res_mess.tool_calls[0].function.arguments
-            })
-        });
-        const tool_result = (await tool_answer.json()).result;
         
-        const system_message_after = { role: 'system', content: "Tool-response:" + tool_result };
+        const system_message_after = { role: 'system', content: tool_results_string };
 
         const node: Node = new Node({ type: "tools", messages: [system_message_before, assistant_message, system_message_after], parents: [], children: [] });
         if (selectedNode !== -1) {

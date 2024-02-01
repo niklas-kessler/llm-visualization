@@ -6,9 +6,9 @@ import NavBar from '@/components/nav-bar'
 
 export default function Home() {
   
-  const [showHistory, setShowHistory] = useState(true);
-  const [isMultiView, setMultiView] = useState(false);
-  const [activeWindows, setActiveWindows]= useState<string[]>(["Chat"]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [isMultiView, setMultiView] = useState(true);
+  const [activeWindows, setActiveWindows]= useState<string[]>(["Chat", "StandardGraph"]);
 
   const handleSingleViewClick = () => {
     setMultiView(false);
