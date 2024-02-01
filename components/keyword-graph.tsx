@@ -1,5 +1,12 @@
-export default function KeywordGraph() {
+import GraphKeywordGraph from "./graph-keyword-graph";
+import { Node } from "@/app/utils/types";
+
+interface KeywordGraphProps {
+    nodes: { [id: number]: Node },
+}
+
+export default function KeywordGraph({ nodes }: KeywordGraphProps) {
     return(
-        <p>Keyword Graph Component</p>       
+        <GraphKeywordGraph nodes={nodes}/>
     );
 }

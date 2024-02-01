@@ -24,7 +24,7 @@ export default function Window({content, chatMessages, nodes, selectedNode, setS
             componentToRender = <StandardGraph nodes={nodes} selectedNode={selectedNode} setSelectedNode={setSelectedNode} reasoning_functions={reasoning_functions}/>;
             break
         case 'KeywordGraph':
-            componentToRender = <KeywordGraph />;
+            componentToRender = <KeywordGraph nodes={nodes} />;
             break;
         case 'SimilarityGraph':
             componentToRender = <SimilarityGraph />;

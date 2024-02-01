@@ -15,7 +15,8 @@ export default function StandardGraph( { nodes, selectedNode, setSelectedNode, r
 
     return(
         <div>
-            <div className="justify-center flex">
+            <GraphStandardGraph nodes={nodes} selectedNode={selectedNode} setSelectedNode={setSelectedNode}/>
+            <div className="justify-center flex pt-1">
                 <button className="py-1 px-2 rounded-l-md w-14 h-14 border-2 border-black bg-gray-400" onClick={forward}>
                     {node_text("forward")}
                 </button>
@@ -43,8 +44,6 @@ export default function StandardGraph( { nodes, selectedNode, setSelectedNode, r
                 </button>
                 
             </div>
-
-            <GraphStandardGraph nodes={nodes} selectedNode={selectedNode} setSelectedNode={setSelectedNode}/>
         </div>
     );
 }

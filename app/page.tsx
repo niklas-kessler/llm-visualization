@@ -8,7 +8,7 @@ export default function Home() {
   
   const [showHistory, setShowHistory] = useState(false);
   const [isMultiView, setMultiView] = useState(true);
-  const [activeWindows, setActiveWindows]= useState<string[]>(["Chat", "StandardGraph"]);
+  const [activeWindows, setActiveWindows]= useState<string[]>(["StandardGraph", "KeywordGraph"]);
 
   const handleSingleViewClick = () => {
     setMultiView(false);
