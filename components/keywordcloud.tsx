@@ -1,16 +1,15 @@
 import { Text } from '@visx/text';
 import { scaleLog } from '@visx/scale';
 import Wordcloud from '@visx/wordcloud/lib/Wordcloud';
-import { totoAfricaLyrics } from './text';
 import { Keyword } from '@/app/utils/types';
 
-interface ExampleProps {
+interface KeywordcloudProps {
   width: number;
   height: number;
   keywords: string[];
 }
 
-export default function WordcloudTest({ width, height, keywords }: ExampleProps) {
+export default function Keywordcloud({ width, height, keywords }: KeywordcloudProps) {
   
     const colors = ['#143059', '#2F6B9A', '#82a6c2'];
 
@@ -27,15 +26,14 @@ export default function WordcloudTest({ width, height, keywords }: ExampleProps)
 
     const fontScale = scaleLog({
     domain: [Math.min(...words.map((w) => w.value)), Math.max(...words.map((w) => w.value))],
-    range: [10,12],
+    range: [8,10],
     });
     const fontSizeSetter = (datum: Keyword) => fontScale(datum.value);
 
     const fixedValueGenerator = () => 0.5;
       
     return (
-    <svg>
-        <g>
+        <g transform={`translate (${-0.5*width - 10}, ${-0.5*height})`}>
             <Wordcloud
                 words={words}
                 width={width}
@@ -53,7 +51,7 @@ export default function WordcloudTest({ width, height, keywords }: ExampleProps)
                     key={w.text}
                     fill={colors[i % colors.length]}
                     textAnchor={'middle'}
-                    transform={`translate(${w.x}, ${w.y}) rotate(${w.rotate})`}
+                    transform={`translate(${w.x}, ${w.y})`}
                     fontSize={w.size}
                     fontFamily={w.font}
                     >
@@ -63,6 +61,5 @@ export default function WordcloudTest({ width, height, keywords }: ExampleProps)
                 }
             </Wordcloud>
         </g>
-    </svg>
-  );
+    );
 }

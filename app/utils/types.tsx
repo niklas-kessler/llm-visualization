@@ -38,7 +38,7 @@ export interface GraphNode {
     x: number;
     y: number;
     messages: MessageType[];
-    keywords?: Keyword[];
+    keywords?: string[];
     parents?: number[];
     children?: number[];
     leaf: () => boolean;

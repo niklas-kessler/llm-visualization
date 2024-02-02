@@ -1,8 +1,6 @@
-import { GraphNode, GraphLink, Node, Keyword } from "@/app/utils/types";
+import { GraphNode, GraphLink, Node} from "@/app/utils/types";
 import { Graph } from "@visx/network";
-import { node_color } from "@/app/utils/utils";
-import Wordcloud from "@visx/wordcloud/lib/Wordcloud";
-import { scaleLog } from "@visx/scale";
+import Keywordcloud from "./keywordcloud";
 
 interface GraphKeywordGraphProps {
     nodes: { [id: number]: Node },
@@ -47,11 +45,17 @@ export default function GraphKeywordGraph({ nodes }: GraphKeywordGraphProps) {
     if (value.children !== undefined) {
       value.children = value.children.map((child) => nodes[child].id);
     }
-    //extract keywords from messages
+    //TODO: extract keywords from messages
     value.keywords= [
-        {text: "Keyword1", value: 1},
-        {text: "Keyword2", value: 3},
-        {text: "Keyword3", value: 2},
+      "word1",
+      "word2",
+      "word3",
+      "word4",
+      "word5",
+      "word6",
+      "word7",
+      "word8",
+      "word9",
     ]
   }
   console.log("after keyword extraction", nodesArr)
@@ -79,42 +83,8 @@ export default function GraphKeywordGraph({ nodes }: GraphKeywordGraphProps) {
 
   // Node
   function GraphNode({ node }: { node: GraphNode }) {
-    const colors = ['#143059', '#2F6B9A', '#82a6c2'];
-    const fontScale = scaleLog({
-        domain: [
-            Math.min(...(node.keywords ?? []).map((w) => w.value)),
-            Math.max(...(node.keywords ?? []).map((w) => w.value))
-        ],
-        range: [2,8],
-      });
-    const fontSizeSetter = (keyword: Keyword) => fontScale(keyword.value);
     return (
-      <g transform="translate(-100,-20)">
-        <Wordcloud 
-          words={node.keywords ?? []}
-          width={100}
-          height={50} 
-          fontSize={fontSizeSetter}
-          font={'Impact'}
-          padding={2}
-          spiral={'rectangular'}
-          rotate={0}
-          random={() => 0.5}
-        >
-          {(cloudwords) => 
-            cloudwords.map((w,i) => (
-              <text
-                key={w.text}
-                fill={colors[i % colors.length]}
-                textAnchor={'middle'}
-                transform={`translate(${2*(w.x??0)}, ${2*(w.y??0)})`}
-                fontFamily={w.font}
-              >
-                {w.text}
-              </text>
-          ))}
-        </Wordcloud>
-      </g>
+        <Keywordcloud width={300} height={150} keywords={node.keywords ?? []}/>
     );
   }
 
