@@ -1,0 +1,1 @@
+export const totoAfricaLyrics = "Keyword1 Keyword1 Keyword1 Keyword2 Keyword2 Keyword3"

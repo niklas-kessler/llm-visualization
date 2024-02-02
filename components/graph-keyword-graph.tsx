@@ -1,11 +1,12 @@
-import { GraphNode, GraphLink, Node } from "@/app/utils/types";
+import { GraphNode, GraphLink, Node, Keyword } from "@/app/utils/types";
 import { Graph } from "@visx/network";
-import { node_color, node_text } from "@/app/utils/utils";
+import { node_color } from "@/app/utils/utils";
+import Wordcloud from "@visx/wordcloud/lib/Wordcloud";
+import { scaleLog } from "@visx/scale";
 
 interface GraphKeywordGraphProps {
     nodes: { [id: number]: Node },
 }
-
 
 export const background = '#eee';
 
@@ -47,7 +48,11 @@ export default function GraphKeywordGraph({ nodes }: GraphKeywordGraphProps) {
       value.children = value.children.map((child) => nodes[child].id);
     }
     //extract keywords from messages
-    value.keywords = ["Keyword1", "Keyword2", "Keyword3"];
+    value.keywords= [
+        {text: "Keyword1", value: 1},
+        {text: "Keyword2", value: 3},
+        {text: "Keyword3", value: 2},
+    ]
   }
   console.log("after keyword extraction", nodesArr)
 
@@ -74,52 +79,68 @@ export default function GraphKeywordGraph({ nodes }: GraphKeywordGraphProps) {
 
   // Node
   function GraphNode({ node }: { node: GraphNode }) {
+    const colors = ['#143059', '#2F6B9A', '#82a6c2'];
+    const fontScale = scaleLog({
+        domain: [
+            Math.min(...(node.keywords ?? []).map((w) => w.value)),
+            Math.max(...(node.keywords ?? []).map((w) => w.value))
+        ],
+        range: [2,8],
+      });
+    const fontSizeSetter = (keyword: Keyword) => fontScale(keyword.value);
     return (
-      <g>
-        <rect 
-            height={40}
-            width={80}
-            fill="#eee"
-            stroke={node_color(node.type, true)}
-            strokeWidth={3}
-            x={-40}
-            y={-20}
-        />
-        <text 
-            fontSize="10px" 
-            textAnchor="middle"
-            height={40}
-            width={80}
+      <g transform="translate(-100,-20)">
+        <Wordcloud 
+          words={node.keywords ?? []}
+          width={100}
+          height={50} 
+          fontSize={fontSizeSetter}
+          font={'Impact'}
+          padding={2}
+          spiral={'rectangular'}
+          rotate={0}
+          random={() => 0.5}
         >
-          {node.keywords?.join(", ")}
-        </text>
+          {(cloudwords) => 
+            cloudwords.map((w,i) => (
+              <text
+                key={w.text}
+                fill={colors[i % colors.length]}
+                textAnchor={'middle'}
+                transform={`translate(${2*(w.x??0)}, ${2*(w.y??0)})`}
+                fontFamily={w.font}
+              >
+                {w.text}
+              </text>
+          ))}
+        </Wordcloud>
       </g>
     );
   }
 
     return(
-        <div className='flex justify-center pt-2'>
+      <div className='flex justify-center pt-2'>
         <svg width={width} height={height}>
-        <rect className='w-full h-full rounded-sm' rx={14} fill={background} />
-        <Graph<GraphLink, GraphNode>
-          graph={graph}
-          top={30}
-          left={width / 2}
-          linkComponent={({ link: { source, target, dashed } }) => (
-            <line
-              x1={source.x}
-              y1={source.y}
-              x2={target.x}
-              y2={target.y}
-              strokeWidth={2}
-              stroke="#999"
-              strokeOpacity={0.6}
-              strokeDasharray={dashed ? '8,4' : undefined}
-            />
-          )}
-          nodeComponent={GraphNode}
-        />
-      </svg>
+          <rect className='w-full h-full rounded-sm' rx={14} fill={background} />
+          <Graph<GraphLink, GraphNode>
+            graph={graph}
+            top={30}
+            left={width / 2}
+            linkComponent={({ link: { source, target, dashed } }) => (
+              <line
+                x1={source.x}
+                y1={source.y}
+                x2={target.x}
+                y2={target.y}
+                strokeWidth={2}
+                stroke="#999"
+                strokeOpacity={0.6}
+                strokeDasharray={dashed ? '8,4' : undefined}
+              />
+            )}
+            nodeComponent={GraphNode}
+          />
+        </svg>
       </div>
     );
 }

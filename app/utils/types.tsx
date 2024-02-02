@@ -38,7 +38,7 @@ export interface GraphNode {
     x: number;
     y: number;
     messages: MessageType[];
-    keywords?: string[];
+    keywords?: Keyword[];
     parents?: number[];
     children?: number[];
     leaf: () => boolean;
@@ -49,4 +49,10 @@ export interface GraphLink {
     source: GraphNode;
     target: GraphNode;
     dashed?: boolean;
+}
+
+
+export interface Keyword {
+    text: string;
+    value: number;
 }
