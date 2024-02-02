@@ -23,6 +23,7 @@ export interface Node {
     id: number;
     type: "user" | "forward" | "tools" | "split" | "aggregate" | "refine" | "attention" | "final";
     messages: MessageType[];
+    keywords?: string[];
     parents?: number[];
     children?: number[];
     level: (nodes: { [id:number]: Node}) => number;

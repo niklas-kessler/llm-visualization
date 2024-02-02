@@ -43,20 +43,10 @@ export default function GraphKeywordGraph({ nodes }: GraphKeywordGraphProps) {
     }
     //map children ids to their id in the new nodes array
     if (value.children !== undefined) {
-      value.children = value.children.map((child) => nodes[child].id);
+      value.children = value.children.map((child) => nodes[child]?.id ?? value.id); //does the ?? value.id make sense?
     }
     //TODO: extract keywords from messages
-    value.keywords= [
-      "word1",
-      "word2",
-      "word3",
-      "word4",
-      "word5",
-      "word6",
-      "word7",
-      "word8",
-      "word9",
-    ]
+    
   }
   console.log("after keyword extraction", nodesArr)
 

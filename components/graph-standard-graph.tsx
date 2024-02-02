@@ -46,7 +46,7 @@ export default function GraphSG({ nodes, selectedNode, setSelectedNode }: GraphS
       value.parents = value.parents.map((parent) => nodes[parent].id);
     }
     if (value.children !== undefined) {
-      value.children = value.children.map((child) => nodes[child].id);
+      value.children = value.children.map((child) => nodes[child]?.id ?? value.id); // does the ?? value.id make sense?
     }
   }
 

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Window from "./window";
 import History from "./history";
 import { MessageType, ReasoningFunctionsType } from "@/app/utils/types";
+import { extract_keywords } from "@/app/utils/utils";
 
 interface AppWindowProps {
     showHistory: boolean;
@@ -16,6 +17,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         id: number;
         type: "user" | "forward" | "tools" | "split" | "aggregate" | "refine" | "attention" | "final";
         messages: MessageType[];
+        keywords?: string[] = [];
         parents?: number[];
         children?: number[];
         leaf: () => boolean;
@@ -182,7 +184,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     }
 
 
-    function reasoning_user(prompt: string) {
+    async function reasoning_user(prompt: string) {
         if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
 
         const userMessage: MessageType = {role: "user", content: prompt};            
@@ -192,10 +194,15 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             node.parents = [selectedNode];
             nodes[selectedNode].children?.push(node.id);
         }
-        appendNodes([node]);
+        extract_keywords({"inputs": node.messages.map(m => m.content)}).then((keywords) => {
+            node.keywords = keywords
+            console.log("extracted keywords", node.keywords)
+            appendNodes([node]);
+        });
     }
 
     async function reasoning_forward() {
+
         if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
 
         const response = await fetch("/api/chatgpt", {
@@ -216,7 +223,11 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             node.parents = [selectedNode];
             nodes[selectedNode].children?.push(node.id);
         }
-        appendNodes([node]);        
+        extract_keywords({"inputs": node.messages.map(m => m.content)}).then((keywords) => {
+            node.keywords = keywords
+            console.log("extracted keywords", node.keywords)
+            appendNodes([node]);
+        });
     }
 
 
@@ -266,7 +277,11 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             node.parents = [selectedNode];
             nodes[selectedNode].children?.push(node.id);
         }
-        appendNodes([node]);
+        extract_keywords({"inputs": node.messages.map(m => m.content)}).then((keywords) => {
+            node.keywords = keywords
+            console.log("extracted keywords", node.keywords)
+            appendNodes([node]);
+        });
     }
 
     function deleteChildren(nodeId: number, nodes: { [id: number]: Node }) {
@@ -337,7 +352,11 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             node.parents = [selectedNode];
             nodes[selectedNode].children?.push(node.id);
         }
-        appendNodes([node]);
+        extract_keywords({"inputs": node.messages.map(m => m.content)}).then((keywords) => {
+            node.keywords = keywords
+            console.log("extracted keywords", node.keywords)
+            appendNodes([node]);
+        });
     }
 
     async function reasoning_parallel_split() {        
@@ -389,8 +408,19 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const node2: Node = new Node({type:"forward", messages:[assistant_message2], parents: ([node_split.id]), children:[]})
         const node3: Node = new Node({type:"forward", messages:[assistant_message3], parents: ([node_split.id]), children:[]})
         node_split.children = [node1.id, node2.id, node3.id]
-        
-        appendNodes([node_split, node1, node2, node3]);        
+        extract_keywords({"inputs": node1.messages.map(m => m.content)}).then((keywords) => {
+            node1.keywords = keywords
+            console.log("extracted keywords 1", node1.keywords)
+        });
+        extract_keywords({"inputs": node2.messages.map(m => m.content)}).then((keywords) => {
+            node2.keywords = keywords
+            console.log("extracted keywords 2", node2.keywords)
+        });
+        extract_keywords({"inputs": node3.messages.map(m => m.content)}).then((keywords) => {
+            node3.keywords = keywords
+            console.log("extracted keywords 3", node3.keywords)
+            appendNodes([node_split, node1, node2, node3]);        
+        });
     }
 
             
@@ -481,7 +511,11 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             for (let leaf of leaves) {
                 nodes[leaf].children?.push(aggregate_node.id);
             }
-            appendNodes([aggregate_node]);
+            extract_keywords({"inputs": node.messages.map(m => m.content)}).then((keywords) => {
+                node.keywords = keywords
+                console.log("extracted keywords", node.keywords)
+                appendNodes([node]);        
+            });
         }
 
         await aggregate(split_node);        
@@ -512,7 +546,11 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             node.parents = [selectedNode];
             nodes[selectedNode].children?.push(node.id);
         }
-        appendNodes([node]);
+        extract_keywords({"inputs": node.messages.map(m => m.content)}).then((keywords) => {
+            node.keywords = keywords
+            console.log("extracted keywords", node.keywords)
+            appendNodes([node]);        
+        });
     }
 
     const reasoning_functions: ReasoningFunctionsType = {
