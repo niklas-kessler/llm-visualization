@@ -30,7 +30,7 @@ export default function Chat({ chatMessages, reasoning_functions }: ChatProps) {
                     </div>
                 ))}
             </div>
-            <ChatInput sendPrompt={reasoning_functions.user}/>
+            <ChatInput reasoning_functions={reasoning_functions}/>
         </div>
     );
 }

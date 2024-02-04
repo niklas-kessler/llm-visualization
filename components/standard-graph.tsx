@@ -41,8 +41,7 @@ export default function StandardGraph( { nodes, selectedNode, setSelectedNode, r
                 </button>
                 <button className="py-1 px-2 w-14 h-14 rounded-r-md border-2 border-black bg-gray-400" onClick={backward}>
                     {node_text("backward")}
-                </button>
-                
+                </button>               
             </div>
         </div>
     );

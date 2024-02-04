@@ -43,7 +43,9 @@ const node_color = (type: string, selected: boolean) => {
 };
 
 async function extract_keywords(data: {inputs: string[]}) {
-	const response = await fetch(
+	console.log("inputs", data)
+  // HuggingFace Model
+  /*const response = await fetch(
 		"https://api-inference.huggingface.co/models/yanekyuk/bert-uncased-keyword-extractor",
 		{
 			headers: { Authorization: "Bearer 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" },
@@ -53,11 +55,30 @@ async function extract_keywords(data: {inputs: string[]}) {
 	);
 	const result = await response.json();
   console.log("backend: keyword extraction1", result)
-  console.log("backend: keyword extraction1a", result[0])
-  console.log("backend: keyword extraction1b", result[0][0])
-  const result_arr = result.flatMap((entry: any) => entry.map((keyword: { word: string, score: number }) => keyword.word));
-  console.log("backend: keyword extraction2", result_arr);
-  return result_arr;
+  if(!result.error){
+    const result_arr = result.flatMap((entry: any) => entry.map((keyword: { word: string, score: number }) => keyword.word));
+    console.log("backend: keyword extraction2", result_arr);
+    return result_arr;
+  }
+  else return [];*/
+  //ChatGPT Model
+  const response = await fetch("/api/chatgpt", {
+    method:"POST",
+    headers:{
+    "Content-Type": "application/json",
+    },
+    body:JSON.stringify({
+    messages: [{role: "system", content: "Extract 1-4 keywords from the following text and give them separated by a single comma: " + data.inputs.join(" \n")}],
+    use_tools: false
+    })
+  });
+  
+  const result = await response.json();
+  console.log(result)
+
+  const res_mess = result.choices[0].message;
+  const content = res_mess.content?.split(",") ?? [];
+  return content;
 }
 
 export {node_text, node_color, extract_keywords}

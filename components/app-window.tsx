@@ -122,7 +122,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
     console.log("rerender, nodes:", nodes)
     // print level of nodes
-    console.log("level of nodes:", Object.values(nodes).map(node => node.level(nodes)));
 
     // update collected messages, triggered when selectedNode is changed
     useEffect(() => {
@@ -144,13 +143,10 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
         // backtrack to beginning, collect important nodes on the fly
         while (!node.head()) {
-            // (2) continue, when split of branches is reached
-            console.log("continue collectChat here (unfinished), current node:", node)
-            /// (3) place this code in the middle, to include the split and the aggregate nodes themselves
             if (aggregated === 0) {
                 messageNodes.push(node);
             }
-            // (1) ignore branches that have been aggregated already
+            // ignore branches that have been aggregated already
             if (node.type === "aggregate"){
                 aggregated++;
             } else if (node.type === "split" && aggregated > 0){
@@ -196,7 +192,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         }
         extract_keywords({"inputs": node.messages.map(m => m.content)}).then((keywords) => {
             node.keywords = keywords
-            console.log("extracted keywords", node.keywords)
             appendNodes([node]);
         });
     }
@@ -225,7 +220,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         }
         extract_keywords({"inputs": node.messages.map(m => m.content)}).then((keywords) => {
             node.keywords = keywords
-            console.log("extracted keywords", node.keywords)
             appendNodes([node]);
         });
     }
@@ -252,6 +246,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const res_mess = result.choices[0].message;
         const assistant_message: MessageType = {role: res_mess.role, content: res_mess.content? res_mess.content : res_mess.tool_calls.map((tool_call: any) => tool_call.function.name + ", " + tool_call.function.arguments).join("\n ")}
 
+        let tool_result = "";
         let tool_results_string = "";
 
         for (let tool_call of res_mess.tool_calls) {
@@ -265,7 +260,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
                     tool_args: tool_call.function.arguments
                 })
             });
-            const tool_result = (await tool_answer.json()).result;
+            tool_result = (await tool_answer.json()).result;
             tool_results_string += "Tool " + tool_call.function.name + " with arguments " + tool_call.function.arguments + " gave result: " + tool_result + "\n";    
         }
         
@@ -277,9 +272,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             node.parents = [selectedNode];
             nodes[selectedNode].children?.push(node.id);
         }
-        extract_keywords({"inputs": node.messages.map(m => m.content)}).then((keywords) => {
+        extract_keywords({"inputs": [tool_result]}).then((keywords) => {
             node.keywords = keywords
-            console.log("extracted keywords", node.keywords)
             appendNodes([node]);
         });
     }
@@ -352,9 +346,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             node.parents = [selectedNode];
             nodes[selectedNode].children?.push(node.id);
         }
-        extract_keywords({"inputs": node.messages.map(m => m.content)}).then((keywords) => {
+        extract_keywords({"inputs": [node.messages[1].content]}).then((keywords) => {
             node.keywords = keywords
-            console.log("extracted keywords", node.keywords)
             appendNodes([node]);
         });
     }
@@ -425,13 +418,17 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
             
     async function reasoning_aggregate() {
+        console.log("reasoning_aggregate, selectedNode", selectedNode)
         if (selectedNode === -1) return;
         if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
 
         let split_node = nodes[selectedNode].findSplit(nodes);
         if (split_node === undefined) return;
 
-        async function aggregate(node: Node) {
+        async function aggregate(node: Node, i:number = 0) {
+
+            console.log("aggregate with node", node)
+            
             if (node.type !== "split")
                 return;
             
@@ -445,6 +442,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             
                 // until leaf
                 while(!curr_node.leaf()) {
+                    console.log("curr_node", curr_node)
+
                     // further inner split
                     if (curr_node.type === "split") {
 
@@ -455,7 +454,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
                         // not yet aggregated
                         else {
                             branch.push(...curr_node.messages); // redundant (split nodes usually have no messages)
-                            aggregate(curr_node); // recursive call
+                            if(i<3) aggregate(curr_node, i+1); // recursive call
                         }
 
                     // else collect and move on
@@ -511,10 +510,9 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             for (let leaf of leaves) {
                 nodes[leaf].children?.push(aggregate_node.id);
             }
-            extract_keywords({"inputs": node.messages.map(m => m.content)}).then((keywords) => {
-                node.keywords = keywords
-                console.log("extracted keywords", node.keywords)
-                appendNodes([node]);        
+            extract_keywords({"inputs": [aggregate_node.messages[1].content]}).then((keywords) => {
+                aggregate_node.keywords = keywords            
+                appendNodes([aggregate_node]);        
             });
         }
 
@@ -546,9 +544,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             node.parents = [selectedNode];
             nodes[selectedNode].children?.push(node.id);
         }
-        extract_keywords({"inputs": node.messages.map(m => m.content)}).then((keywords) => {
+        extract_keywords({"inputs": [node.messages[1].content]}).then((keywords) => {
             node.keywords = keywords
-            console.log("extracted keywords", node.keywords)
             appendNodes([node]);        
         });
     }

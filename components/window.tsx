@@ -32,9 +32,9 @@ export default function Window({content, chatMessages, nodes, selectedNode, setS
     }
 
     return(
-        <div className="flex flex-col bg-stone-200 h-full p-1">
-            <div className="justify-start w-min p-2 border-b-2 border-r-2 border-zinc-600 bg-zinc-400 rounded-br">
-                <label className="py-1 px-2">{content}</label>    
+        <div className="flex flex-col bg-stone-200 h-full">
+            <div className="justify-start w-min border-b-2 border-r-2 border-zinc-600 bg-zinc-400 rounded-br">
+                <label className="text-xs px-2">{content}</label>    
             </div>
             { componentToRender }
         </div>
