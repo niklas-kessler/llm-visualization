@@ -55,7 +55,6 @@ export interface GraphLink {
 }
 
 export interface KeywordSettings {
-    keyword: string;
     color: string;
     show: boolean;
 }
