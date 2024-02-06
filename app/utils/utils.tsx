@@ -68,7 +68,7 @@ async function extract_keywords(data: {inputs: string[]}) {
     "Content-Type": "application/json",
     },
     body:JSON.stringify({
-    messages: [{role: "system", content: "Extract 1-4 keywords from the following text and give them separated by a single comma: " + data.inputs.join(" \n")}],
+    messages: [{role: "system", content: "Extract 1-4 keywords from the following text and give them  separated by a single comma without any additional text before or after: " + data.inputs.join(" \n")}],
     use_tools: false
     })
   });
