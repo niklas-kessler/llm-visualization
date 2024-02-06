@@ -17,6 +17,11 @@ export default function GraphKeywordGraph({ nodes, setNodes }: GraphKeywordGraph
   const nodesArr: GraphNode[] = [];
   const [selectedKeywordNode, setSelectedKeywordNode] = useState<number>(-1); // initialize with -1
 
+  // reset selectedKeywordNode when selected node is deleted
+  if (selectedKeywordNode !== -1 && !nodes[selectedKeywordNode]) {
+    setSelectedKeywordNode(-1);
+  }
+
   //group nodes by level
   const nodesByLevel = Object.values(nodes).reduce((groups, node) => {
     const key = node.level(nodes);
