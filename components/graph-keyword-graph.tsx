@@ -1,21 +1,22 @@
 import { GraphNode, GraphLink, Node} from "@/app/utils/types";
 import { Graph } from "@visx/network";
 import Keywordcloud from "./keywordcloud";
-import { useState } from "react";
 
 interface GraphKeywordGraphProps {
     nodes: { [id: number]: Node },
     setNodes: (nodes: { [id: number]: Node }) => void,
+    selectedKeywordNode: number,
+    setSelectedKeywordNode: (nodeId: number) => void,
 }
 
 export const background = '#eee';
 
-export default function GraphKeywordGraph({ nodes, setNodes }: GraphKeywordGraphProps) {
+export default function GraphKeywordGraph({ nodes, setNodes, selectedKeywordNode, setSelectedKeywordNode }: GraphKeywordGraphProps) {
   const width = 500;
   const height = 350;
 
   const nodesArr: GraphNode[] = [];
-  const [selectedKeywordNode, setSelectedKeywordNode] = useState<number>(-1); // initialize with -1
+  
 
   // reset selectedKeywordNode when selected node is deleted
   if (selectedKeywordNode !== -1 && !nodes[selectedKeywordNode]) {
@@ -91,10 +92,16 @@ export default function GraphKeywordGraph({ nodes, setNodes }: GraphKeywordGraph
         }} // Add onClick event handler
         style={{ cursor: "pointer" }} // Add cursor style
       >
+        <circle
+          r={20}
+          fill="#ccc"
+          opacity={0.5}
+        />
         <Keywordcloud 
           width={300} 
           height={150} 
-          keywords={(selectedKeywordNode === -1) ? (node.keywords ?? []) : (node.selectedKeywordsContained ?? ["error: calculation of selectedKeywordsContained is called too late"])}/>
+          keywords={(selectedKeywordNode === -1) ? (node.keywords ?? []) : (node.selectedKeywordsContained ?? ["error: calculation of selectedKeywordsContained is called too late"])}
+        />
       </g>
     );
   }
@@ -146,7 +153,6 @@ export default function GraphKeywordGraph({ nodes, setNodes }: GraphKeywordGraph
             />
           </svg>
         </div>
-        <p>{(selectedKeywordNode === -1)? "show all keywords" : `show keywords from node ${selectedKeywordNode}`}</p>
       </div>
     );
 }

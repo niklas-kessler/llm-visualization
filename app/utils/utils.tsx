@@ -76,8 +76,14 @@ async function extract_keywords(data: {inputs: string[]}) {
   const result = await response.json();
   console.log(result)
 
-  const res_mess = result.choices[0].message;
-  const content = res_mess.content?.split(",") ?? [];
+  let res_mess: string = result.choices[0].message.content ?? "";
+  
+  // if the response contains some message like 'These are the Keywords: ', we throw that first part away
+  if (res_mess.includes('Keywords: ')) {
+    const startIndex = res_mess.indexOf('Keywords: ') + 'Keywords: '.length;
+    res_mess = res_mess.slice(startIndex);
+  }
+  const content = res_mess.split(",") ?? [];
   return content;
 }
 

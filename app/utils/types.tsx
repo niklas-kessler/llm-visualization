@@ -54,8 +54,8 @@ export interface GraphLink {
     dashed?: boolean;
 }
 
-
-export interface Keyword {
-    text: string;
-    value: number;
+export interface KeywordSettings {
+    keyword: string;
+    color: string;
+    show: boolean;
 }
