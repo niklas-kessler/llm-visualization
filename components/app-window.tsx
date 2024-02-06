@@ -18,6 +18,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         type: "user" | "forward" | "tools" | "split" | "aggregate" | "refine" | "attention" | "final";
         messages: MessageType[];
         keywords?: string[] = [];
+        selectedKeywordsContained?: string[];
         parents?: number[];
         children?: number[];
         leaf: () => boolean;
@@ -575,11 +576,11 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
                     </div>
                 )}
                 <div className="flex-1">
-                    <Window content={activeWindows[0]} nodes={nodes} chatMessages={chatMessages} selectedNode={selectedNode} setSelectedNode={setSelectedNode} reasoning_functions={reasoning_functions}/>
+                    <Window content={activeWindows[0]} nodes={nodes} setNodes={setNodes} chatMessages={chatMessages} selectedNode={selectedNode} setSelectedNode={setSelectedNode} reasoning_functions={reasoning_functions}/>
                 </div>
                 {activeWindows[1] && (
                     <div className="flex-1 border-l-2 border-zinc-400">
-                        <Window content={activeWindows[1]} nodes={nodes} chatMessages={chatMessages} selectedNode={selectedNode} setSelectedNode={setSelectedNode} reasoning_functions={reasoning_functions}/>
+                        <Window content={activeWindows[1]} nodes={nodes} setNodes={setNodes} chatMessages={chatMessages} selectedNode={selectedNode} setSelectedNode={setSelectedNode} reasoning_functions={reasoning_functions}/>
                     </div>
                 )}
             </div>

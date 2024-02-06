@@ -1,60 +1,56 @@
 import { GraphNode, GraphLink, Node} from "@/app/utils/types";
 import { Graph } from "@visx/network";
 import Keywordcloud from "./keywordcloud";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 interface GraphKeywordGraphProps {
     nodes: { [id: number]: Node },
+    setNodes: (nodes: { [id: number]: Node }) => void,
 }
 
 export const background = '#eee';
 
-export default function GraphKeywordGraph({ nodes }: GraphKeywordGraphProps) {
+export default function GraphKeywordGraph({ nodes, setNodes }: GraphKeywordGraphProps) {
   const width = 500;
   const height = 350;
 
-  const [nodesArr, setNodesArr] = useState<GraphNode[]>(initNodesArr()); // initialize with empty array
+  const nodesArr: GraphNode[] = [];
   const [selectedKeywordNode, setSelectedKeywordNode] = useState<number>(-1); // initialize with -1
-  useEffect(() => {GraphNode}, [selectedKeywordNode]);    
-  
-  function initNodesArr(): GraphNode[]{
 
-    //group nodes by level
-    const nodesByLevel = Object.values(nodes).reduce((groups, node) => {
-      const key = node.level(nodes);
-      if (!groups[key]) {
-          groups[key] = [];
-      }
-      groups[key].push(node);
-      return groups;
-    }, {} as { [key: string]: Node[] });
-
-    //map nodes-dict to array of nodes with x and y coordinates
-    let updatedNodesArr: GraphNode[] = [];
-    for (const key in nodesByLevel) {
-      const n_nodes = nodesByLevel[key].length;
-      for (let i = 0; i < n_nodes; i++) {
-        const node = nodesByLevel[key][i];
-        const x = (i - (n_nodes - 1) / 2) * width / (n_nodes + 1);
-        const numLevels = Object.keys(nodesByLevel).length;
-        const y = parseInt(key) * height / numLevels;
-        const graphNode = { ...node, x, y } as GraphNode;
-        updatedNodesArr.push(graphNode);
-      }
+  //group nodes by level
+  const nodesByLevel = Object.values(nodes).reduce((groups, node) => {
+    const key = node.level(nodes);
+    if (!groups[key]) {
+        groups[key] = [];
     }
+    groups[key].push(node);
+    return groups;
+  }, {} as { [key: string]: Node[] });
 
-    for (const value of updatedNodesArr) {
-      //map parents ids to their id in the new nodes array
-      if (value.parents !== undefined) {
-        value.parents = value.parents.map((parent) => nodes[parent].id);
-      }
-      //map children ids to their id in the new nodes array
-      if (value.children !== undefined) {
-        value.children = value.children.map((child) => nodes[child]?.id ?? value.id); //does the ?? value.id make sense?
-      }
+  //map nodes-dict to array of nodes with x and y coordinates
+  for (const key in nodesByLevel) {
+    const n_nodes = nodesByLevel[key].length;
+    for (let i = 0; i < n_nodes; i++) {
+      const node = nodesByLevel[key][i];
+      const x = (i - (n_nodes - 1) / 2) * width / (n_nodes + 1);
+      const numLevels = Object.keys(nodesByLevel).length;
+      const y = parseInt(key) * height / numLevels;
+      const graphNode = { ...node, x, y } as GraphNode;
+      nodesArr.push(graphNode);
     }
-    return updatedNodesArr;
   }
+
+  for (const value of nodesArr) {
+    //map parents ids to their id in the new nodes array
+    if (value.parents !== undefined) {
+      value.parents = value.parents.map((parent) => nodes[parent].id);
+    }
+    //map children ids to their id in the new nodes array
+    if (value.children !== undefined) {
+      value.children = value.children.map((child) => nodes[child]?.id ?? value.id); //does the ?? value.id make sense?
+    }
+  }
+  
 
   //map nodes dict to array of links
   const linksArr: GraphLink[] = []
@@ -81,29 +77,31 @@ export default function GraphKeywordGraph({ nodes }: GraphKeywordGraphProps) {
   function GraphNode({ node }: { node: GraphNode }) {
     return (
       <g 
-        onClick={() => calculateKeywords(node.id, node.keywords)} // Add onClick event handler
+        onClick={() => {
+          if (selectedKeywordNode === node.id) {
+            setSelectedKeywordNode(-1);
+            return;
+          }
+          calculateKeywords(node.id, node.keywords)
+        }} // Add onClick event handler
         style={{ cursor: "pointer" }} // Add cursor style
       >
         <Keywordcloud 
           width={300} 
           height={150} 
-          keywords={(selectedKeywordNode === -1) ? (node.keywords ?? []) : (node.selectedKeywordsContained ?? ["outdated"])}/>
+          keywords={(selectedKeywordNode === -1) ? (node.keywords ?? []) : (node.selectedKeywordsContained ?? ["error: calculation of selectedKeywordsContained is called too late"])}/>
       </g>
     );
   }
 
-  // Calculate keywords when a node is clicked
+  // Calculate keywords when a node is clicked, set nodes from AppWindow
   function calculateKeywords(nodeId: number, keywords?: string[]) {
     if (!keywords) return;
-    if (selectedKeywordNode === nodeId) {
-      setSelectedKeywordNode(-1);
-      return;
-    }
 
-    let updatedNodesArr = [...nodesArr];
-
+    let updatedNodes = {...nodes};
     // For each node...
-    for (let node of updatedNodesArr) {
+    for (const nodeId in updatedNodes) {
+      const node = updatedNodes[nodeId];
       node.selectedKeywordsContained = [];
       const messages = node.messages.map(m => m.content);
 
@@ -114,10 +112,9 @@ export default function GraphKeywordGraph({ nodes }: GraphKeywordGraphProps) {
         }
       }
     }
-    setNodesArr(updatedNodesArr);
+    setNodes(updatedNodes);
     setSelectedKeywordNode(nodeId);
   }
-
 
     return(
       <div>

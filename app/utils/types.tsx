@@ -24,6 +24,7 @@ export interface Node {
     type: "user" | "forward" | "tools" | "split" | "aggregate" | "refine" | "attention" | "final";
     messages: MessageType[];
     keywords?: string[];
+    selectedKeywordsContained?: string[];
     parents?: number[];
     children?: number[];
     level: (nodes: { [id:number]: Node}) => number;
