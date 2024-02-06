@@ -40,6 +40,7 @@ export interface GraphNode {
     y: number;
     messages: MessageType[];
     keywords?: string[];
+    selectedKeywordsContained?: string[];
     parents?: number[];
     children?: number[];
     leaf: () => boolean;

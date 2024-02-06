@@ -415,8 +415,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             appendNodes([node_split, node1, node2, node3]);        
         });
     }
-
-            
+         
     async function reasoning_aggregate() {
         console.log("reasoning_aggregate, selectedNode", selectedNode)
         if (selectedNode === -1) return;
