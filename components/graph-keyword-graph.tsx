@@ -1,4 +1,4 @@
-import { GraphNode, GraphLink, Node} from "@/app/utils/types";
+import { GraphNode, GraphLink, Node, KeywordSettings} from "@/app/utils/types";
 import { Graph } from "@visx/network";
 import Keywordcloud from "./keywordcloud";
 
@@ -7,11 +7,12 @@ interface GraphKeywordGraphProps {
     setNodes: (nodes: { [id: number]: Node }) => void,
     selectedKeywordNode: number,
     setSelectedKeywordNode: (nodeId: number) => void,
+    keywordSettings: {[keyword: string]: KeywordSettings},
 }
 
 export const background = '#eee';
 
-export default function GraphKeywordGraph({ nodes, setNodes, selectedKeywordNode, setSelectedKeywordNode }: GraphKeywordGraphProps) {
+export default function GraphKeywordGraph({ nodes, setNodes, selectedKeywordNode, setSelectedKeywordNode, keywordSettings }: GraphKeywordGraphProps) {
   const width = 500;
   const height = 350;
 
@@ -101,6 +102,7 @@ export default function GraphKeywordGraph({ nodes, setNodes, selectedKeywordNode
           width={300} 
           height={150} 
           keywords={(selectedKeywordNode === -1) ? (node.keywords ?? []) : (node.selectedKeywordsContained ?? ["error: calculation of selectedKeywordsContained is called too late"])}
+          keywordSettings={keywordSettings}
         />
       </g>
     );
@@ -109,22 +111,6 @@ export default function GraphKeywordGraph({ nodes, setNodes, selectedKeywordNode
   // Calculate keywords when a node is clicked, set nodes from AppWindow
   function calculateKeywords(nodeId: number, keywords?: string[]) {
     if (!keywords) return;
-
-    let updatedNodes = {...nodes};
-    // For each node...
-    for (const nodeId in updatedNodes) {
-      const node = updatedNodes[nodeId];
-      node.selectedKeywordsContained = [];
-      const messages = node.messages.map(m => m.content);
-
-      // ...check if it contains any of the current keywords
-      for (const keyword of keywords) {
-        if (messages.some((message: string) => message.includes(keyword))){          
-          node.selectedKeywordsContained?.push(keyword);
-        }
-      }
-    }
-    setNodes(updatedNodes);
     setSelectedKeywordNode(nodeId);
   }
 

@@ -1,6 +1,6 @@
 import GraphKeywordGraph from "./graph-keyword-graph";
 import { Node } from "@/app/utils/types";
-import { Key, useState } from "react";
+import { useState, useEffect } from "react";
 import { KeywordSettings } from "@/app/utils/types";
 
 interface KeywordGraphProps {
@@ -13,16 +13,48 @@ export default function KeywordGraph({ nodes, setNodes }: KeywordGraphProps) {
     const [selectedKeywordNode, setSelectedKeywordNode] = useState<number>(-1); // initialize with -1
     const [keywordSettings, setKeywordSettings] = useState<{[keyword: string]: KeywordSettings}>({}); // initialize with []
 
+    useEffect(recalculateShownKeywords, [keywordSettings])
+
     function onSetSelectedKeywordNode(nodeId: number) {
+
+        console.log("setting selectedKeywordNode to", nodes[nodeId])
+
         setSelectedKeywordNode(nodeId);
-        
+
+        // init settings
         let updatedKeywordSettings: {[keyword: string]: KeywordSettings} = {};
         for (const keyword of nodes[nodeId]?.keywords ?? []) {  
             if (!updatedKeywordSettings[keyword]) {
                 updatedKeywordSettings[keyword] = {color: "#000000", show: true};
             }
         }
+    
         setKeywordSettings(updatedKeywordSettings);
+        console.log(updatedKeywordSettings)
+    }
+
+    function recalculateShownKeywords() {
+        // For each node...
+        let updatedNodes = {...nodes};
+        for (const nodeId in updatedNodes) {
+            const node = updatedNodes[nodeId];
+            node.selectedKeywordsContained = [];
+            const messages = node.messages.map(m => m.content);
+
+            const keywords = node.keywords ?? [];
+            for (let keyword of keywords) {
+                // ...and each keyword that should be shown...
+                if(keywordSettings[keyword]?.show === true){
+                    // ...check wether the node contains it.
+                    if (messages.some((message: string) => message.toLowerCase().includes(keyword))){          
+                        node.selectedKeywordsContained?.push(keyword);
+                    }
+                }
+            }
+        }
+
+        // update state
+        setNodes(updatedNodes);
     }
 
     function KeywordSettingsComponent(keyword: string) {
@@ -66,7 +98,7 @@ export default function KeywordGraph({ nodes, setNodes }: KeywordGraphProps) {
                 </p>
                 
             </div>
-            <GraphKeywordGraph nodes={nodes} setNodes={setNodes} selectedKeywordNode={selectedKeywordNode} setSelectedKeywordNode={onSetSelectedKeywordNode}/>
+            <GraphKeywordGraph nodes={nodes} setNodes={setNodes} selectedKeywordNode={selectedKeywordNode} setSelectedKeywordNode={onSetSelectedKeywordNode} keywordSettings={keywordSettings}/>
         </div>
     );
 }

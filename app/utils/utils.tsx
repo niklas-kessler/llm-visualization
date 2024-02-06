@@ -79,11 +79,15 @@ async function extract_keywords(data: {inputs: string[]}) {
   let res_mess: string = result.choices[0].message.content ?? "";
   
   // if the response contains some message like 'These are the Keywords: ', we throw that first part away
-  if (res_mess.includes('Keywords: ')) {
-    const startIndex = res_mess.indexOf('Keywords: ') + 'Keywords: '.length;
+  if (res_mess.toLowerCase().includes('keywords: ')) {
+    const startIndex = res_mess.toLowerCase().indexOf('keywords: ') + 'keywords: '.length;
     res_mess = res_mess.slice(startIndex);
   }
   const content = res_mess.split(",") ?? [];
+  for (let i = 0; i < content.length; i++) {
+    content[i] = content[i].trim();
+    content[i] = content[i].toLowerCase();
+  }
   return content;
 }
 

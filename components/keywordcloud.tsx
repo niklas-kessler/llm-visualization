@@ -1,17 +1,20 @@
 import { Text } from '@visx/text';
 import { scaleLog } from '@visx/scale';
 import Wordcloud from '@visx/wordcloud/lib/Wordcloud';
-import { Keyword } from '@/app/utils/types';
+import { Keyword, KeywordSettings } from '@/app/utils/types';
 
 interface KeywordcloudProps {
   width: number;
   height: number;
   keywords: string[];
+  keywordSettings: {[keyword: string]: KeywordSettings},
 }
 
-export default function Keywordcloud({ width, height, keywords }: KeywordcloudProps) {
-  
-    const colors = ['#143059', '#2F6B9A', '#82a6c2'];
+export default function Keywordcloud({ width, height, keywords, keywordSettings }: KeywordcloudProps) {
+
+    
+    const defaultColors = ['#143059', '#2F6B9A', '#82a6c2'];
+
 
     function wordFreq(): Keyword[] {
         const freqMap: Record<string, number> = {};
@@ -49,7 +52,7 @@ export default function Keywordcloud({ width, height, keywords }: KeywordcloudPr
                 cloudWords.map((w, i) => (
                     <Text
                     key={w.text}
-                    fill={colors[i % colors.length]}
+                    fill={keywordSettings[w.text as string]?.color || defaultColors[i % defaultColors.length]}
                     textAnchor={'middle'}
                     transform={`translate(${w.x}, ${w.y})`}
                     fontSize={w.size}
