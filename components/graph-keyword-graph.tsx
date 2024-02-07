@@ -3,8 +3,8 @@ import { Graph } from "@visx/network";
 import Keywordcloud from "./keywordcloud";
 
 interface GraphKeywordGraphProps {
+    fullScreen: boolean,
     nodes: { [id: number]: Node },
-    setNodes: (nodes: { [id: number]: Node }) => void,
     selectedKeywordNode: number,
     setSelectedKeywordNode: (nodeId: number) => void,
     keywordSettings: {[keyword: string]: KeywordSettings},
@@ -12,7 +12,7 @@ interface GraphKeywordGraphProps {
 
 export const background = '#eee';
 
-export default function GraphKeywordGraph({ nodes, setNodes, selectedKeywordNode, setSelectedKeywordNode, keywordSettings }: GraphKeywordGraphProps) {
+export default function GraphKeywordGraph({ fullScreen, nodes, selectedKeywordNode, setSelectedKeywordNode, keywordSettings }: GraphKeywordGraphProps) {
   const width = 500;
   const height = 350;
 
@@ -115,30 +115,28 @@ export default function GraphKeywordGraph({ nodes, setNodes, selectedKeywordNode
   }
 
     return(
-      <div>
-        <div className='flex justify-center pt-2'>
-          <svg width={width} height={height}>
-            <rect className='w-full h-full rounded-sm' rx={14} fill={background} />
-            <Graph<GraphLink, GraphNode>
-              graph={graph}
-              top={30}
-              left={width / 2}
-              linkComponent={({ link: { source, target, dashed } }) => (
-                <line
-                  x1={source.x}
-                  y1={source.y}
-                  x2={target.x}
-                  y2={target.y}
-                  strokeWidth={2}
-                  stroke="#999"
-                  strokeOpacity={0.6}
-                  strokeDasharray={dashed ? '8,4' : undefined}
-                />
-              )}
-              nodeComponent={GraphNode}
-            />
-          </svg>
-        </div>
+      <div className='flex justify-center pt-2 p-4 w-full h-full'>
+        <svg width="100%" height="100%">
+          <rect className='rounded-sm' width="100%" height="100%" rx={14} fill={background} />
+          <Graph<GraphLink, GraphNode>
+            graph={graph}
+            top={30}
+            left={fullScreen? 600 : 300}
+            linkComponent={({ link: { source, target, dashed } }) => (
+              <line
+                x1={source.x}
+                y1={source.y}
+                x2={target.x}
+                y2={target.y}
+                strokeWidth={2}
+                stroke="#999"
+                strokeOpacity={0.6}
+                strokeDasharray={dashed ? '8,4' : undefined}
+              />
+            )}
+            nodeComponent={GraphNode}
+          />
+        </svg>
       </div>
     );
 }

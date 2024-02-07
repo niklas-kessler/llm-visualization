@@ -4,11 +4,12 @@ import { useState, useEffect } from "react";
 import { KeywordSettings } from "@/app/utils/types";
 
 interface KeywordGraphProps {
+    fullScreen: boolean,
     nodes: { [id: number]: Node },
     setNodes: (nodes: { [id: number]: Node }) => void,
 }
 
-export default function KeywordGraph({ nodes, setNodes }: KeywordGraphProps) {
+export default function KeywordGraph({ fullScreen, nodes, setNodes }: KeywordGraphProps) {
 
     const [selectedKeywordNode, setSelectedKeywordNode] = useState<number>(-1); // initialize with -1
     const [keywordSettings, setKeywordSettings] = useState<{[keyword: string]: KeywordSettings}>({}); // initialize with []
@@ -59,7 +60,7 @@ export default function KeywordGraph({ nodes, setNodes }: KeywordGraphProps) {
 
     function KeywordSettingsComponent(keyword: string) {
         return (
-            <div className="flex justify-between p-1">
+            <div className="flex justify-between px-1 pb-4">
                 <input 
                     type="checkbox" 
                     checked={keywordSettings[keyword].show}
@@ -85,20 +86,20 @@ export default function KeywordGraph({ nodes, setNodes }: KeywordGraphProps) {
     }
 
     return(
-        <div className="relative">
-            <div className="absolute top-0 right-4 w-32 h-52 bg-gray-300 border-black border-4">
+        <div className="relative w-full h-full">
+            <div className="absolute top-0 right-4 w-32 min-h-6 h-fit max-h-52 bg-gray-300 border-black border-4">
                 
                 {/*show a KeywordSettingsComponent for each keywordSetting here*/}
                 {Object.keys(keywordSettings).map((keyword) => {
                     return KeywordSettingsComponent(keyword);
                 })}
                     
-                <p className="absolute bottom-0 left-1" style={{ fontSize: "0.6rem" }}>
+                <p className="absolute bottom-0 left-1/2 transform -translate-x-1/2 whitespace-nowrap" style={{ fontSize: "0.6rem" }}>
                     {(selectedKeywordNode === -1) ? "show all keywords" : `keywords from node ${selectedKeywordNode}`}
                 </p>
                 
             </div>
-            <GraphKeywordGraph nodes={nodes} setNodes={setNodes} selectedKeywordNode={selectedKeywordNode} setSelectedKeywordNode={onSetSelectedKeywordNode} keywordSettings={keywordSettings}/>
+            <GraphKeywordGraph fullScreen={fullScreen} nodes={nodes} selectedKeywordNode={selectedKeywordNode} setSelectedKeywordNode={onSetSelectedKeywordNode} keywordSettings={keywordSettings}/>
         </div>
     );
 }

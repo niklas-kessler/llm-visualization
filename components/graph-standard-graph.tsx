@@ -4,6 +4,7 @@ import { Graph } from '@visx/network';
 import { node_color, node_text } from '@/app/utils/utils';
 
 export type GraphSGProps = {  
+  fullScreen: boolean,
   selectedNode: number,
   setSelectedNode: (id: number) => void,
   nodes: { [id: number]: Node },
@@ -12,7 +13,7 @@ export type GraphSGProps = {
 
 export const background = '#272b4d';
 
-export default function GraphSG({ nodes, selectedNode, setSelectedNode }: GraphSGProps) {
+export default function GraphSG({ fullScreen, nodes, selectedNode, setSelectedNode }: GraphSGProps) {
   const width = 500;
   const height = 350;
 
@@ -93,13 +94,13 @@ export default function GraphSG({ nodes, selectedNode, setSelectedNode }: GraphS
   
   // Graph Standard Graph
   return (
-      <div className='flex justify-center pt-2'>
-        <svg width={width} height={height}>
-        <rect className='w-full h-full rounded-sm' rx={14} fill={background} />
+      <div className='flex justify-center pt-2 p-4 w-full h-full'>
+        <svg width="100%" height="100%">
+        <rect className='rounded-sm' width="100%" height="100%" rx={14} fill={background} />
         <Graph<GraphLink, GraphNode>
           graph={graph}
           top={30}
-          left={width / 2}
+          left={fullScreen? 600 : 300}
           linkComponent={({ link: { source, target, dashed } }) => (
             <line
               x1={source.x}

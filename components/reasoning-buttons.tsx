@@ -1,0 +1,49 @@
+import { ReasoningFunctionsType } from "@/app/utils/types"
+import { node_text } from "@/app/utils/utils"
+
+interface ReasoningButtonsProps {
+    showButtons: boolean,
+    setShowButtons: (showButtons: boolean) => void,
+    reasoning_functions: ReasoningFunctionsType,
+    horizontal: boolean
+}
+
+export default function ReasoningButtons({ showButtons, setShowButtons, reasoning_functions, horizontal }: ReasoningButtonsProps) {
+    const { forward, tools, backward, refine, parallel_split, aggregate, attention } = reasoning_functions
+    return (
+        <div className={horizontal ? "flex" : "flex-col"}>
+            <button className={`w-11 h-11 self-center ml-2 ${horizontal?"" : "mb-2"} bg-zinc-400 border-2 border-zinc-700 rounded-full`} onClick={() => setShowButtons(!showButtons)}>
+                {showButtons ? "-" : "+"}
+            </button>
+            {showButtons &&
+            <div className={`flex flex${horizontal?"":"-col"} ml-2 self-center`}>
+                <button className={`w-11 h-11 rounded-${horizontal?"l":"t"}-md border-2 border-zinc-700 bg-zinc-400 text-sm`} onClick={forward}>
+                    {node_text("forward")}
+                </button>
+                <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={tools}>
+                    {node_text("tools")}
+                </button>
+                <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={parallel_split}>
+                    <text style={{ fontSize: "smaller", whiteSpace: "nowrap", overflow: "hidden" }}>
+                        {node_text("split")}
+                    </text>
+                </button>
+                <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={aggregate}>
+                    <text style={{ fontSize: "smaller", whiteSpace: "nowrap", overflow: "hidden" }}>
+                        {node_text("aggregate")}
+                    </text>
+                </button>
+                <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={refine}>
+                    {node_text("refine")}
+                </button>
+                <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={attention}>
+                    {node_text("attention")}
+                </button>
+                <button className={`w-11 h-11 rounded-${horizontal?"r":"b"}-md border-2 border-zinc-700 bg-zinc-400`} onClick={backward}>
+                    {node_text("backward")}
+                </button>               
+            </div>
+            }
+        </div>
+    );
+}

@@ -6,6 +6,7 @@ import { MessageType, ReasoningFunctionsType, Node } from '@/app/utils/types';
 
 interface WindowProps {
     content: string,
+    fullScreen: boolean
     chatMessages: MessageType[],
     nodes: { [id: number]: Node },
     setNodes: (nodes: { [id: number]: Node }) => void,
@@ -14,7 +15,7 @@ interface WindowProps {
     reasoning_functions: ReasoningFunctionsType
 }
 
-export default function Window({content, chatMessages, nodes, setNodes, selectedNode, setSelectedNode, reasoning_functions }: WindowProps) {
+export default function Window({content, fullScreen, chatMessages, nodes, setNodes, selectedNode, setSelectedNode, reasoning_functions }: WindowProps) {
     let componentToRender;
     
     switch(content){
@@ -22,10 +23,10 @@ export default function Window({content, chatMessages, nodes, setNodes, selected
             componentToRender = <Chat chatMessages={chatMessages} reasoning_functions={reasoning_functions}/>;
             break;
         case "StandardGraph":
-            componentToRender = <StandardGraph nodes={nodes} selectedNode={selectedNode} setSelectedNode={setSelectedNode} reasoning_functions={reasoning_functions}/>;
+            componentToRender = <StandardGraph fullScreen={fullScreen} nodes={nodes} selectedNode={selectedNode} setSelectedNode={setSelectedNode} reasoning_functions={reasoning_functions}/>;
             break
         case 'KeywordGraph':
-            componentToRender = <KeywordGraph nodes={nodes} setNodes={setNodes}/>;
+            componentToRender = <KeywordGraph fullScreen={fullScreen} nodes={nodes} setNodes={setNodes}/>;
             break;
         case 'SimilarityGraph':
             componentToRender = <SimilarityGraph />;
