@@ -11,6 +11,8 @@ interface KeywordGraphProps {
 
 export default function KeywordGraph({ fullScreen, nodes, setNodes }: KeywordGraphProps) {
 
+    const defaultColors = ["#06d6a0", "#1b9aaa", "#ef476f", "#ffc43d", "#073b4c", "#118ab2", "#f4a261", "#2a9d8f", "#f8ffe5"];
+
     const [selectedKeywordNode, setSelectedKeywordNode] = useState<number>(-1); // initialize with -1
     const [keywordSettings, setKeywordSettings] = useState<{[keyword: string]: KeywordSettings}>({}); // initialize with []
 
@@ -24,9 +26,17 @@ export default function KeywordGraph({ fullScreen, nodes, setNodes }: KeywordGra
 
         // init settings
         let updatedKeywordSettings: {[keyword: string]: KeywordSettings} = {};
-        for (const keyword of nodes[nodeId]?.keywords ?? []) {  
+        const keywords = nodes[nodeId]?.keywords ?? [];
+        for (let i = 0; i < keywords.length; i++) {
+            const keyword = keywords[i];
+            // avoid duplicates
             if (!updatedKeywordSettings[keyword]) {
-                updatedKeywordSettings[keyword] = {color: "#000000", show: true};
+                // reuse old settings if available
+                if (keywordSettings[keyword]) {
+                    updatedKeywordSettings[keyword] = keywordSettings[keyword];
+                } else {
+                    updatedKeywordSettings[keyword] = { color: defaultColors[i%defaultColors.length], show: true };
+                }
             }
         }
     
@@ -85,10 +95,26 @@ export default function KeywordGraph({ fullScreen, nodes, setNodes }: KeywordGra
         )
     }
 
+    /* show defaultColors
+                    <div className="flex">
+                        {defaultColors.map((color) => (
+                            <div
+                                key={color}
+                                style={{
+                                    width: "10px",
+                                    height: "10px",
+                                    backgroundColor: color,
+                                    marginRight: "0px",
+                                }}
+                            ></div>
+                        ))}
+                    </div>
+                */
+
     return(
         <div className="relative w-full h-full">
-            <div className="absolute top-0 right-4 w-32 min-h-6 h-fit max-h-52 bg-gray-300 border-black border-4">
-                
+            <GraphKeywordGraph fullScreen={fullScreen} nodes={nodes} selectedKeywordNode={selectedKeywordNode} setSelectedKeywordNode={onSetSelectedKeywordNode} keywordSettings={keywordSettings}/>
+            <div className="absolute top-4 left-4 w-32 min-h-6 h-fit max-h-52 bg-gray-300 border-black border-4">                
                 {/*show a KeywordSettingsComponent for each keywordSetting here*/}
                 {Object.keys(keywordSettings).map((keyword) => {
                     return KeywordSettingsComponent(keyword);
@@ -99,7 +125,6 @@ export default function KeywordGraph({ fullScreen, nodes, setNodes }: KeywordGra
                 </p>
                 
             </div>
-            <GraphKeywordGraph fullScreen={fullScreen} nodes={nodes} selectedKeywordNode={selectedKeywordNode} setSelectedKeywordNode={onSetSelectedKeywordNode} keywordSettings={keywordSettings}/>
         </div>
     );
 }

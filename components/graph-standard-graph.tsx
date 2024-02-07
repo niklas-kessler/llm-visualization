@@ -21,6 +21,15 @@ export default function GraphSG({ fullScreen, nodes, selectedNode, setSelectedNo
 
   const width = fullScreen? 1260 : 620;
   const height = 420;
+  const [showMiniMap, setShowMiniMap] = useState<boolean>(true);
+  const initialTransform = {
+    scaleX: 1.0,
+    scaleY: 1.0,
+    translateX: 0,
+    translateY: 0,
+    skewX: 0,
+    skewY: 0,
+  };
 
   //group nodes by level
   const nodesByLevel = Object.values(nodes).reduce((groups, node) => {
@@ -98,17 +107,6 @@ export default function GraphSG({ fullScreen, nodes, selectedNode, setSelectedNo
   }
   
   // Graph Standard Graph
-  const initialTransform = {
-    scaleX: 1.0,
-    scaleY: 1.0,
-    translateX: 0,
-    translateY: 0,
-    skewX: 0,
-    skewY: 0,
-  };
-
-  const [showMiniMap, setShowMiniMap] = useState<boolean>(true);
-
   return (
     <g className='flex justify-center pt-2'>
       <Zoom <SVGSVGElement>
