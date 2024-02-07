@@ -2,7 +2,7 @@
 import { GraphNode, GraphLink, Node } from '@/app/utils/types';
 import { Graph } from '@visx/network';
 import { node_color, node_text } from '@/app/utils/utils';
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Zoom } from '@visx/zoom';
 import { RectClipPath } from '@visx/clip-path';
 import { localPoint } from '@visx/event';
@@ -98,30 +98,6 @@ export default function GraphSG({ fullScreen, nodes, selectedNode, setSelectedNo
   }
   
   // Graph Standard Graph
-  /*return (
-      <div className='flex justify-center pt-2 p-4 w-full h-full'>
-        <svg width="100%" height="100%">
-        <rect className='rounded-sm' width="100%" height="100%" rx={14} fill={background} />
-        <Graph<GraphLink, GraphNode>
-          graph={graph}
-          top={30}
-          left={fullScreen? 600 : 300}
-          linkComponent={({ link: { source, target } }) => (
-            <line
-              x1={source.x}
-              y1={source.y}
-              x2={target.x}
-              y2={target.y}
-              strokeWidth={2}
-              stroke="#999"
-              strokeOpacity={0.6}
-            />
-          )}
-          nodeComponent={GraphNode}
-        />
-      </svg>
-      </div>
-    );*/
   const initialTransform = {
     scaleX: 1.0,
     scaleY: 1.0,
@@ -154,25 +130,6 @@ export default function GraphSG({ fullScreen, nodes, selectedNode, setSelectedNo
               >
                 <RectClipPath id="zoom-clip" width={width} height={height} />
                 <rect width={width} height={height} rx={14} fill={background} />
-                <g transform={zoom.toString()}>
-                  <Graph<GraphLink, GraphNode>
-                    graph={graph}
-                    top={30}
-                    left={fullScreen? 600 : 300}
-                    linkComponent={({ link: { source, target } }) => (
-                      <line
-                        x1={source.x}
-                        y1={source.y}
-                        x2={target.x}
-                        y2={target.y}
-                        strokeWidth={2}
-                        stroke="#999"
-                        strokeOpacity={0.6}
-                      />
-                    )}
-                    nodeComponent={GraphNode}
-                  />
-                </g>
                 <rect
                   width={width}
                   height={height}
@@ -192,6 +149,25 @@ export default function GraphSG({ fullScreen, nodes, selectedNode, setSelectedNo
                     zoom.scale({ scaleX: 1.1, scaleY: 1.1, point });
                   }}
                 />
+                <g transform={zoom.toString()}>
+                  <Graph<GraphLink, GraphNode>
+                    graph={graph}
+                    top={30}
+                    left={fullScreen? 600 : 300}
+                    linkComponent={({ link: { source, target } }) => (
+                      <line
+                        x1={source.x}
+                        y1={source.y}
+                        x2={target.x}
+                        y2={target.y}
+                        strokeWidth={2}
+                        stroke="#999"
+                        strokeOpacity={0.6}
+                      />
+                    )}
+                    nodeComponent={GraphNode}
+                  />
+                </g>
                 {showMiniMap && (
                   <g
                     clipPath="url(#zoom-clip)"
