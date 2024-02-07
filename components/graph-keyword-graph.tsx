@@ -122,7 +122,7 @@ export default function GraphKeywordGraph({ fullScreen, nodes, selectedKeywordNo
             graph={graph}
             top={30}
             left={fullScreen? 600 : 300}
-            linkComponent={({ link: { source, target, dashed } }) => (
+            linkComponent={({ link: { source, target } }) => (
               <line
                 x1={source.x}
                 y1={source.y}
@@ -131,7 +131,6 @@ export default function GraphKeywordGraph({ fullScreen, nodes, selectedKeywordNo
                 strokeWidth={2}
                 stroke="#999"
                 strokeOpacity={0.6}
-                strokeDasharray={dashed ? '8,4' : undefined}
               />
             )}
             nodeComponent={GraphNode}

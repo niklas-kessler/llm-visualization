@@ -17,10 +17,10 @@ export default function StandardGraph( { fullScreen, nodes, selectedNode, setSel
 
     return(
         <div className="relative w-full h-full">
+            <GraphStandardGraph fullScreen={fullScreen} nodes={nodes} selectedNode={selectedNode} setSelectedNode={setSelectedNode}/>
             <div className="absolute top-4 left-4">
                 <ReasoningButtons showButtons={showButtons} setShowButtons={setShowButtons} reasoning_functions={reasoning_functions} horizontal={false}/>
             </div>
-            <GraphStandardGraph fullScreen={fullScreen} nodes={nodes} selectedNode={selectedNode} setSelectedNode={setSelectedNode}/>
         </div>
     );
 }
