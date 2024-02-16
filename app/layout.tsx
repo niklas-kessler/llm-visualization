@@ -7,7 +7,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Graph GPT',
+  title: 'GPT-Viz',
   description: 'Bachelorproject by Niklas Kessler',
   
 }

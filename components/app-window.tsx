@@ -93,14 +93,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             new Node({type:"forward", messages: [{role:'assistant', content:'The LLMs initial stupid answer.'}], children:[2], parents:[0]}),
             new Node({type:"split", messages: [], children:[3,4,5], parents:[1]}),
             new Node({type:"tools", messages: [{role:'system', content:'Make tool-calls to check and improve your answer'},{role:'assistant', content:'Tool-Calls: google(Pandas)'},{role:'system', content:'Those are the tools results: ...'}], children:[6], parents:[2]}),
-            /*new Node({type:"split", messages: [], children:[6,7,8], parents:[2]}),            
-            new Node({type:"split", messages: [], children:[9,10,11], parents:[2]}),            
-            new Node({type:"forward", messages: [{role:'assistant', content:'Test'}], children:[], parents:[4]}),
-            new Node({type:"forward", messages: [{role:'assistant', content:'Test'}], children:[], parents:[4]}),
-            new Node({type:"forward", messages: [{role:'assistant', content:'Test'}], children:[], parents:[4]}),
-            new Node({type:"forward", messages: [{role:'assistant', content:'Test'}], children:[], parents:[5]}),
-            new Node({type:"forward", messages: [{role:'assistant', content:'Test'}], children:[], parents:[5]}),
-            new Node({type:"forward", messages: [{role:'assistant', content:'Test'}], children:[], parents:[5]}),*/
             new Node({type:"forward", messages: [{role:'assistant', content:'Another reasoning step'}], children:[6], parents:[2]}),
             new Node({type:"forward", messages: [{role:'assistant', content:'Another reasoning step'}], children:[6], parents:[2]}),
             new Node({type:"aggregate", messages: [{role:'system', content:'Aggregate the previous steps'},{role:'assistant', content:'Most prompisin seems the answer from google, indicating that ...'}], children:[7], parents:[3,4,5]}),
@@ -119,7 +111,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     const [selectedNode, setSelectedNode ] = useState<number>(-1); // initialize with -1
     const [chatMessages, setChatMessages] = useState<MessageType[]>([]);
     const [idCount, setIdCount] = useState<number>(0); // use as (idCount + Node.idCount_temp) to get the actual current id
-    const [nodes, setNodes] = useState<{ [id: number]: Node }>(initNodes);
+    const [nodes, setNodes] = useState<{ [id: number]: Node }>({});
 
     console.log("rerender, nodes:", nodes)
     // print level of nodes

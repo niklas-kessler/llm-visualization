@@ -14,7 +14,7 @@ interface GraphKeywordGraphProps {
     keywordSettings: {[keyword: string]: KeywordSettings},
 }
 
-export const background = '#eee';
+export const background = '#ccc';
 
 export default function GraphKeywordGraph({ fullScreen, nodes, selectedKeywordNode, setSelectedKeywordNode, keywordSettings }: GraphKeywordGraphProps) {
   

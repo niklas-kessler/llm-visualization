@@ -1,0 +1,54 @@
+** all simulated **
+[
+  {
+    type: "function",
+    function: {
+      name: "get_item_price",
+      description: "Get the price to a purchasable item, e.g. merchandise.",
+      parameters: {
+        type: "object",
+        properties: {
+          item_id: {
+            type: "string",
+            description: "The id of the purchasable item",
+          },
+        },
+        required: ["item_id"],
+      },
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_available_merch_products",
+      description: "Get availabilty and item_ids about merch products of a certain person.",
+      parameters: {
+        type: "object",
+        properties: {
+          name: {
+            type: "string",
+            description: "The name of the person, e.g. Bruno Mars",
+          },
+        },
+        required: ["name"],
+      },
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_info_about_person",
+      description: "Get information to a certain person, about what their job, private life and what they are famous for.",
+      parameters: {
+        type: "object",
+        properties: {
+          name: {
+            type: "string",
+            description: "The name of the person, e.g. Bruno Mars",
+          },
+        },
+        required: ["name"]
+      },
+    }
+  },
+]

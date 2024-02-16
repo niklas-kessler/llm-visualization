@@ -15,7 +15,7 @@ export type GraphSGProps = {
 };
 
 
-export const background = '#272b4d';
+export const background = '#ccc';
 
 export default function GraphSG({ fullScreen, nodes, selectedNode, setSelectedNode }: GraphSGProps) {
 
