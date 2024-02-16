@@ -15,6 +15,20 @@ const node_text = (type: string) => {
     return textMap[type] || textMap.default;
 };
 
+import { scaleLinear } from '@visx/scale';
+import { schemeSet1 } from 'd3-scale-chromatic';
+
+const similarity_node_color = (similarity: number) => {
+  const color = scaleLinear({
+  domain: [0, 1],
+  range: ['#ed4fbb', '#e9a039'],
+});
+
+  console.log(schemeSet1);
+  console.log("similarity", similarity, "color", color(similarity));
+  return color(similarity);  
+}
+
 const node_color = (type: string, selected: boolean) => {
     
   const colorMap_selected: { [key: string]: string } = {
@@ -179,4 +193,4 @@ function node_similarity_text_embedding(nodes: { [id: number]: Node }): { [id: n
 }
 
 
-export {node_text, node_color, extract_keywords, text_embedding, node_similarity_seqmatch, node_similarity_text_embedding}
+export {node_text, node_color, similarity_node_color, extract_keywords, text_embedding, node_similarity_seqmatch, node_similarity_text_embedding}
