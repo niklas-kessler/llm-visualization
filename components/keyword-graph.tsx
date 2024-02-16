@@ -14,14 +14,11 @@ export default function KeywordGraph({ fullScreen, nodes, setNodes }: KeywordGra
     const defaultColors = ["#06d6a0", "#1b9aaa", "#ef476f", "#ffc43d", "#073b4c", "#118ab2", "#f4a261", "#2a9d8f", "#f8ffe5"];
 
     const [selectedKeywordNode, setSelectedKeywordNode] = useState<number>(-1); // initialize with -1
-    const [keywordSettings, setKeywordSettings] = useState<{[keyword: string]: KeywordSettings}>({}); // initialize with []
+    const [keywordSettings, setKeywordSettings] = useState<{[keyword: string]: KeywordSettings}>({}); // whether and in which color to show each of the current keywords, initialize with {}
 
     useEffect(recalculateShownKeywords, [keywordSettings])
 
     function onSetSelectedKeywordNode(nodeId: number) {
-
-        console.log("setting selectedKeywordNode to", nodes[nodeId])
-
         setSelectedKeywordNode(nodeId);
 
         // init settings
@@ -31,7 +28,7 @@ export default function KeywordGraph({ fullScreen, nodes, setNodes }: KeywordGra
             const keyword = keywords[i];
             // avoid duplicates
             if (!updatedKeywordSettings[keyword]) {
-                // reuse old settings if available
+                // reuse old settings if available, so that color and show state change as little as possible when selecting a different node
                 if (keywordSettings[keyword]) {
                     updatedKeywordSettings[keyword] = keywordSettings[keyword];
                 } else {
@@ -41,7 +38,6 @@ export default function KeywordGraph({ fullScreen, nodes, setNodes }: KeywordGra
         }
     
         setKeywordSettings(updatedKeywordSettings);
-        console.log(updatedKeywordSettings)
     }
 
     function recalculateShownKeywords() {
@@ -53,8 +49,8 @@ export default function KeywordGraph({ fullScreen, nodes, setNodes }: KeywordGra
             const messages = node.messages.map(m => m.content);
 
             const keywords = node.keywords ?? [];
+            // ...and each keyword that should be shown...
             for (let keyword of keywords) {
-                // ...and each keyword that should be shown...
                 if(keywordSettings[keyword]?.show === true){
                     // ...check wether the node contains it.
                     if (messages.some((message: string) => message.toLowerCase().includes(keyword))){          
@@ -63,9 +59,7 @@ export default function KeywordGraph({ fullScreen, nodes, setNodes }: KeywordGra
                 }
             }
         }
-
-        // update state
-        setNodes(updatedNodes);
+        setNodes(updatedNodes); // update state
     }
 
     function KeywordSettingsComponent(keyword: string) {
@@ -115,7 +109,6 @@ export default function KeywordGraph({ fullScreen, nodes, setNodes }: KeywordGra
         <div className="relative w-full h-full">
             <GraphKeywordGraph fullScreen={fullScreen} nodes={nodes} selectedKeywordNode={selectedKeywordNode} setSelectedKeywordNode={onSetSelectedKeywordNode} keywordSettings={keywordSettings}/>
             <div className="absolute top-4 left-4 w-32 min-h-6 h-fit max-h-52 bg-gray-300 border-black border-4">                
-                {/*show a KeywordSettingsComponent for each keywordSetting here*/}
                 {Object.keys(keywordSettings).map((keyword) => {
                     return KeywordSettingsComponent(keyword);
                 })}

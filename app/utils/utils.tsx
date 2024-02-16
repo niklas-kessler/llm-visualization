@@ -43,7 +43,6 @@ const node_color = (type: string, selected: boolean) => {
 };
 
 async function extract_keywords(data: {inputs: string[]}) {
-	console.log("inputs", data)
   // HuggingFace Model
   /*const response = await fetch(
 		"https://api-inference.huggingface.co/models/yanekyuk/bert-uncased-keyword-extractor",
@@ -91,4 +90,93 @@ async function extract_keywords(data: {inputs: string[]}) {
   return content;
 }
 
-export {node_text, node_color, extract_keywords}
+import { UMAP } from 'umap-js';
+import * as difflib from 'difflib';
+import { Node } from './types';
+
+function normalizeArray(arr: number[]): number[] {
+  if (arr.length === 0) {
+    return arr; // Empty array, nothing to normalize
+  }
+
+  const minValue = Math.min(...arr);
+  const maxValue = Math.max(...arr);
+
+  const normalizedArray = arr.map((value) => (value - minValue) / (maxValue - minValue));
+
+  return normalizedArray;
+}
+
+function string_similarity_seqmatch(str1: string, str2: string): number {
+  const seq = new difflib.SequenceMatcher(null, str1, str2);
+  return seq.ratio();
+}
+
+async function text_embedding(inputs: string[]){
+  const str = inputs.join(" ");
+  const response = await fetch("/api/get_text_embedding", {
+    method:"POST",
+    headers:{
+    "Content-Type": "application/json",
+    },
+    body:JSON.stringify({
+    str: str
+    })
+  });
+  
+  const result = await response.json();
+  return result.data[0].embedding;
+}
+
+function node_similarity_seqmatch(nodes: { [id: number]: Node }): { [id: number]: Node } {
+  const stringSet = Object.values(nodes).map((node) => node.messages.map((message) => message.content).join(" "));
+  const n = stringSet.length;
+  if (n <= 1) return nodes;
+  console.log("stringSet", stringSet);
+
+  //calculate similarity matrix
+  let similarityMatrix: number[][] = [];
+
+  for (let i = 0; i < n; i++) {
+    const row: number[] = [];
+    for (let j = 0; j < n; j++) {
+      const similarity = string_similarity_seqmatch(stringSet[i], stringSet[j]);
+      row.push(similarity);
+    }
+    similarityMatrix.push(row);
+  }
+  const reducer = new UMAP({ nComponents: 1, nNeighbors: n-1 }); //TODO: Option to map to more than 1 dimension -> multi-dim. color scale
+  let similarityValues = reducer.fit(similarityMatrix).map((x: number[]) => x[0]);
+  
+  similarityValues = normalizeArray(similarityValues);
+  console.log("similarityValues", similarityValues);
+
+  nodes = Object.values(nodes).map((node, index) => {
+    node.similarityValue = similarityValues[index];
+    return node;
+  });
+  return nodes;
+}
+
+
+function node_similarity_text_embedding(nodes: { [id: number]: Node }): { [id: number]: Node }{
+  const embedding_matrix = Object.values(nodes).map((node) => node.textembedding ?? []);
+  const n = embedding_matrix.length;
+  if (n <= 1) return nodes;
+
+  const reducer = new UMAP({ nComponents: 1, nNeighbors: n-1 }); //TODO: Option to map to more than 1 dimension -> multi-dim. color scale
+  let similarityValues = reducer.fit(embedding_matrix).map((x: number[]) => x[0]);
+  
+  similarityValues = normalizeArray(similarityValues);
+  console.log("similarityValues", similarityValues);
+
+  nodes = Object.values(nodes).map((node, index) => {
+    node.similarityValue = similarityValues[index];
+    return node;
+  });
+
+  return nodes;
+}
+
+
+export {node_text, node_color, extract_keywords, text_embedding, node_similarity_seqmatch, node_similarity_text_embedding}

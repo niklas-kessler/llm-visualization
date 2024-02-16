@@ -25,6 +25,8 @@ export interface Node {
     messages: MessageType[];
     keywords?: string[];
     selectedKeywordsContained?: string[];
+    textembedding?: number[];
+    similarityValue: number;
     parents?: number[];
     children?: number[];
     level: (nodes: { [id:number]: Node}) => number;
@@ -42,6 +44,8 @@ export interface GraphNode {
     messages: MessageType[];
     keywords?: string[];
     selectedKeywordsContained?: string[];
+    textembedding?: number[];
+    similarityValue: number;
     parents?: number[];
     children?: number[];
     leaf: () => boolean;

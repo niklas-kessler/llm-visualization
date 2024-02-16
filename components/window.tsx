@@ -29,7 +29,7 @@ export default function Window({content, fullScreen, chatMessages, nodes, setNod
             componentToRender = <KeywordGraph fullScreen={fullScreen} nodes={nodes} setNodes={setNodes}/>;
             break;
         case 'SimilarityGraph':
-            componentToRender = <SimilarityGraph />;
+            componentToRender = <SimilarityGraph fullScreen={fullScreen} nodes={nodes} setNodes={setNodes}/>;
             break;
     }
 
