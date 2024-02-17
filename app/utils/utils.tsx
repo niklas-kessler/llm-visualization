@@ -16,16 +16,12 @@ const node_text = (type: string) => {
 };
 
 import { scaleLinear } from '@visx/scale';
-import { schemeSet1 } from 'd3-scale-chromatic';
 
-const similarity_node_color = (similarity: number) => {
+const similarity_node_color = (similarity: number, color1: string, color2: string) => {
   const color = scaleLinear({
   domain: [0, 1],
-  range: ['#ed4fbb', '#e9a039'],
+  range: [color1, color2],
 });
-
-  console.log(schemeSet1);
-  console.log("similarity", similarity, "color", color(similarity));
   return color(similarity);  
 }
 
@@ -121,9 +117,15 @@ function normalizeArray(arr: number[]): number[] {
   return normalizedArray;
 }
 
-function string_similarity_seqmatch(str1: string, str2: string): number {
+function seqmatch(str1: string, str2: string): number {
   const seq = new difflib.SequenceMatcher(null, str1, str2);
   return seq.ratio();
+}
+
+function keyword_overlap(keywords1: string[], keywords2: string[]): number {
+  const overlap = keywords1.filter((keyword) => keywords2.includes(keyword)).length;
+  console.log("keywords1", keywords1, "keywords2", keywords2, "overlap", overlap);
+  return overlap / Math.min(keywords1.length, keywords2.length);
 }
 
 async function text_embedding(inputs: string[]){
@@ -154,7 +156,7 @@ function node_similarity_seqmatch(nodes: { [id: number]: Node }): { [id: number]
   for (let i = 0; i < n; i++) {
     const row: number[] = [];
     for (let j = 0; j < n; j++) {
-      const similarity = string_similarity_seqmatch(stringSet[i], stringSet[j]);
+      const similarity = seqmatch(stringSet[i], stringSet[j]);
       row.push(similarity);
     }
     similarityMatrix.push(row);
@@ -172,6 +174,34 @@ function node_similarity_seqmatch(nodes: { [id: number]: Node }): { [id: number]
   return nodes;
 }
 
+function node_similarity_keyword_overlap(nodes: { [id: number]: Node }): { [id: number]: Node } {
+  const keywords = Object.values(nodes).map((node) => node.keywords ?? []); 
+  const n = keywords.length;
+  if (n <= 1) return nodes;
+
+  //calculate similarity matrix
+  let similarityMatrix: number[][] = [];
+
+  for (let i = 0; i < n; i++) {
+    const row: number[] = [];
+    for (let j = 0; j < n; j++) {
+      const similarity = keyword_overlap(keywords[i], keywords[j]);
+      row.push(similarity);
+    }
+    similarityMatrix.push(row);
+  }
+  const reducer = new UMAP({ nComponents: 1, nNeighbors: n-1 }); //TODO: Option to map to more than 1 dimension -> multi-dim. color scale
+  let similarityValues = reducer.fit(similarityMatrix).map((x: number[]) => x[0]);
+  
+  similarityValues = normalizeArray(similarityValues);
+  console.log("similarityMatrix", similarityMatrix);
+
+  nodes = Object.values(nodes).map((node, index) => {
+    node.similarityValue = similarityValues[index];
+    return node;
+  });
+  return nodes;
+}
 
 function node_similarity_text_embedding(nodes: { [id: number]: Node }): { [id: number]: Node }{
   const embedding_matrix = Object.values(nodes).map((node) => node.textembedding ?? []);
@@ -193,4 +223,4 @@ function node_similarity_text_embedding(nodes: { [id: number]: Node }): { [id: n
 }
 
 
-export {node_text, node_color, similarity_node_color, extract_keywords, text_embedding, node_similarity_seqmatch, node_similarity_text_embedding}
+export {node_text, node_color, similarity_node_color, extract_keywords, text_embedding, node_similarity_seqmatch, node_similarity_keyword_overlap, node_similarity_text_embedding}

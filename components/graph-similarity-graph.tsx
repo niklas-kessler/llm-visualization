@@ -91,7 +91,7 @@
          <circle
            r={20}
            fill={"#fff"}
-           stroke={similarity_node_color(node.similarityValue)}
+           stroke={similarity_node_color(node.similarityValue, '#ed4fbb', '#e9a039')}
            strokeWidth={6}
          />
          <text fontSize="10px" textAnchor="middle">
