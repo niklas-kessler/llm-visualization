@@ -117,17 +117,41 @@ function normalizeArray(arr: number[]): number[] {
   return normalizedArray;
 }
 
+// maps a 2D matrix to a 1D array using PCA or UMAP, then normalizes the result
+function mapToOneDimension(matrix: number[][], method: "PCA"|"UMAP" = "PCA"): number[] {
+  let result: number[] = [];
+  if (method === "PCA"){
+    var PCA = require('pca-js');
+    const vectors = PCA.getEigenVectors(matrix);
+    result = PCA.computeAdjustedData(matrix, vectors[0]).adjustedData[0];
+  } 
+  else if (method === "UMAP"){
+    const n = matrix.length;
+    const reducer = new UMAP({ nComponents: 1, nNeighbors: n-1 });
+    result = reducer.fit(matrix).map((x: number[]) => x[0]);
+  } 
+  else {
+    console.log("Error: Invalid method");
+    return result;
+  }
+  return normalizeArray(result);
+}
+
+// Using a SequenceMatcher, calculate the similarity of two strings as a number between 0 and 1
 function seqmatch(str1: string, str2: string): number {
   const seq = new difflib.SequenceMatcher(null, str1, str2);
   return seq.ratio();
 }
 
+// Using KeywordOverlap, return the similarity of two strings as a number between 0 and 1
 function keyword_overlap(keywords1: string[], keywords2: string[]): number {
-  const overlap = keywords1.filter((keyword) => keywords2.includes(keyword)).length;
-  console.log("keywords1", keywords1, "keywords2", keywords2, "overlap", overlap);
-  return overlap / Math.min(keywords1.length, keywords2.length);
+  const overlap1 = keywords1.filter((keyword) => keywords2.includes(keyword)).length;
+  const overlap2 = keywords2.filter((keyword) => keywords1.includes(keyword)).length;
+  console.log("keywords1", keywords1, "keywords2", keywords2, "overlap1", overlap1, "overlap2", overlap2);
+  return Math.max(overlap1, overlap2) / Math.min(keywords1.length, keywords2.length);
 }
 
+// Calculate the text embedding of a string
 async function text_embedding(inputs: string[]){
   const str = inputs.join(" ");
   const response = await fetch("/api/get_text_embedding", {
@@ -144,13 +168,12 @@ async function text_embedding(inputs: string[]){
   return result.data[0].embedding;
 }
 
-function node_similarity_seqmatch(nodes: { [id: number]: Node }): { [id: number]: Node } {
+// Calculate the similarity of nodes based on the sequence-match-similarity of their messages
+function node_similarity_seqmatch(nodes: { [id: number]: Node }, reduction_method?: "PCA"|"UMAP"): { [id: number]: Node } {
   const stringSet = Object.values(nodes).map((node) => node.messages.map((message) => message.content).join(" "));
   const n = stringSet.length;
   if (n <= 1) return nodes;
-  console.log("stringSet", stringSet);
 
-  //calculate similarity matrix
   let similarityMatrix: number[][] = [];
 
   for (let i = 0; i < n; i++) {
@@ -161,11 +184,8 @@ function node_similarity_seqmatch(nodes: { [id: number]: Node }): { [id: number]
     }
     similarityMatrix.push(row);
   }
-  const reducer = new UMAP({ nComponents: 1, nNeighbors: n-1 }); //TODO: Option to map to more than 1 dimension -> multi-dim. color scale
-  let similarityValues = reducer.fit(similarityMatrix).map((x: number[]) => x[0]);
-  
-  similarityValues = normalizeArray(similarityValues);
-  console.log("similarityValues", similarityValues);
+
+  const similarityValues = mapToOneDimension(similarityMatrix, reduction_method);  
 
   nodes = Object.values(nodes).map((node, index) => {
     node.similarityValue = similarityValues[index];
@@ -174,12 +194,12 @@ function node_similarity_seqmatch(nodes: { [id: number]: Node }): { [id: number]
   return nodes;
 }
 
-function node_similarity_keyword_overlap(nodes: { [id: number]: Node }): { [id: number]: Node } {
+// Calculate the similarity of nodes based on the keyword-overlap-similarity of their messages
+function node_similarity_keyword_overlap(nodes: { [id: number]: Node }, reduction_method?: "PCA"|"UMAP"): { [id: number]: Node } {
   const keywords = Object.values(nodes).map((node) => node.keywords ?? []); 
   const n = keywords.length;
   if (n <= 1) return nodes;
 
-  //calculate similarity matrix
   let similarityMatrix: number[][] = [];
 
   for (let i = 0; i < n; i++) {
@@ -190,11 +210,8 @@ function node_similarity_keyword_overlap(nodes: { [id: number]: Node }): { [id: 
     }
     similarityMatrix.push(row);
   }
-  const reducer = new UMAP({ nComponents: 1, nNeighbors: n-1 }); //TODO: Option to map to more than 1 dimension -> multi-dim. color scale
-  let similarityValues = reducer.fit(similarityMatrix).map((x: number[]) => x[0]);
   
-  similarityValues = normalizeArray(similarityValues);
-  console.log("similarityMatrix", similarityMatrix);
+  const similarityValues = mapToOneDimension(similarityMatrix, reduction_method);  
 
   nodes = Object.values(nodes).map((node, index) => {
     node.similarityValue = similarityValues[index];
@@ -203,16 +220,13 @@ function node_similarity_keyword_overlap(nodes: { [id: number]: Node }): { [id: 
   return nodes;
 }
 
-function node_similarity_text_embedding(nodes: { [id: number]: Node }): { [id: number]: Node }{
+// Calculate the similarity of nodes based on the text-embedding-similarity of their messages
+function node_similarity_text_embedding(nodes: { [id: number]: Node }, reduction_method?: "PCA"|"UMAP"): { [id: number]: Node }{
   const embedding_matrix = Object.values(nodes).map((node) => node.textembedding ?? []);
   const n = embedding_matrix.length;
   if (n <= 1) return nodes;
 
-  const reducer = new UMAP({ nComponents: 1, nNeighbors: n-1 }); //TODO: Option to map to more than 1 dimension -> multi-dim. color scale
-  let similarityValues = reducer.fit(embedding_matrix).map((x: number[]) => x[0]);
-  
-  similarityValues = normalizeArray(similarityValues);
-  console.log("similarityValues", similarityValues);
+  const similarityValues = mapToOneDimension(embedding_matrix, reduction_method);  
 
   nodes = Object.values(nodes).map((node, index) => {
     node.similarityValue = similarityValues[index];

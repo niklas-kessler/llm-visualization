@@ -67,3 +67,10 @@ export interface KeywordSettings {
     color: string;
     show: boolean;
 }
+
+export interface SimilaritySettings {
+    measurement: "seqmatch" | "keywordoverlap" | "textembedding";
+    reduction_method: "PCA" | "UMAP";
+    color1: string;
+    color2: string;
+}

@@ -10,12 +10,14 @@
  export type GraphSGProps = {  
    fullScreen: boolean,
    nodes: { [id: number]: Node },
+   color1: string,
+   color2: string
  };
  
  
  export const background = '#ccc';
  
- export default function GraphSimGraph({ fullScreen, nodes }: GraphSGProps) {
+ export default function GraphSimGraph({ fullScreen, nodes, color1, color2 }: GraphSGProps) {
  
    const width = fullScreen? 1260 : 620;
    const height = 420;
@@ -91,7 +93,7 @@
          <circle
            r={20}
            fill={"#fff"}
-           stroke={similarity_node_color(node.similarityValue, '#ed4fbb', '#e9a039')}
+           stroke={similarity_node_color(node.similarityValue, color1, color2)}
            strokeWidth={6}
          />
          <text fontSize="10px" textAnchor="middle">
