@@ -18,7 +18,7 @@ export default function SimilarityGraph( { fullScreen, nodes, selectedNode, setS
         color1: '#e9a039',
         color2: "#118ab2"
         
-    }); //seqmatch or textembedding
+    });
 
     const measurementFunctions: any = {
         seqmatch: node_similarity_seqmatch,
@@ -26,7 +26,7 @@ export default function SimilarityGraph( { fullScreen, nodes, selectedNode, setS
         textembedding: node_similarity_text_embedding
     };
     
-    const sim_nodes = measurementFunctions[settings.measurement](nodes);
+    const sim_nodes = measurementFunctions[settings.measurement](nodes, settings.reduction_method);
 
     return (
         <div className="relative w-full h-full">
@@ -38,8 +38,8 @@ export default function SimilarityGraph( { fullScreen, nodes, selectedNode, setS
                     ))}
                 </select>
                 <select className="w-24 m-3 bg-gray-100" value={settings.reduction_method as "PCA" | "UMAP"} onChange={(e) => setSettings({ ...settings, reduction_method: e.target.value as "PCA" | "UMAP" })}>
-                    <option value={"PCA"}>PCA</option>
-                    <option value={"UMAP"}>UMAP</option>
+                    <option key={"PCA"} value={"PCA"}>PCA</option>
+                    <option key={"UMAP"} value={"UMAP"}>UMAP</option>
                 </select>
                 <div className="flex justify-center">
                     <input 

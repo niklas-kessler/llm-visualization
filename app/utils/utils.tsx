@@ -121,11 +121,13 @@ function normalizeArray(arr: number[]): number[] {
 function mapToOneDimension(matrix: number[][], method: "PCA"|"UMAP" = "PCA"): number[] {
   let result: number[] = [];
   if (method === "PCA"){
+    console.log("PCA");
     var PCA = require('pca-js');
     const vectors = PCA.getEigenVectors(matrix);
     result = PCA.computeAdjustedData(matrix, vectors[0]).adjustedData[0];
   } 
   else if (method === "UMAP"){
+    console.log("UMAP");
     const n = matrix.length;
     const reducer = new UMAP({ nComponents: 1, nNeighbors: n-1 });
     result = reducer.fit(matrix).map((x: number[]) => x[0]);
