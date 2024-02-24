@@ -423,49 +423,29 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const node1: Node = new Node({type:"forward", messages:[assistant_message1], parents: ([node_split.id]), children:[]})
         const node2: Node = new Node({type:"forward", messages:[assistant_message2], parents: ([node_split.id]), children:[]})
         const node3: Node = new Node({type:"forward", messages:[assistant_message3], parents: ([node_split.id]), children:[]})
-        node_split.children = [node1.id, node2.id, node3.id]
-        extract_keywords({"inputs": node1.messages.map(m => m.content)}).then((keywords) => {
-            node1.keywords = keywords
-            console.log("extracted keywords 1", node1.keywords)
-        });
-        extract_keywords({"inputs": node2.messages.map(m => m.content)}).then((keywords) => {
-            node2.keywords = keywords
-            console.log("extracted keywords 2", node2.keywords)
-        });
-        extract_keywords({"inputs": node3.messages.map(m => m.content)}).then((keywords) => {
-            node3.keywords = keywords
-            console.log("extracted keywords 3", node3.keywords)
-            appendNodes([node_split, node1, node2, node3]);        
-        });
-        // Node1: extract keywords and calculate textembedding
+        node_split.children = [node1.id, node2.id, node3.id];
+        
+        //extract keywords and calculate textembedding
         const relevant_messages_1 = node1.messages.map(m => m.content);
-        Promise.all([
-            extract_keywords({"inputs": relevant_messages_1}),
-            text_embedding(relevant_messages_1)
-        ]).then(([keywords, textembedding]) => {
-            node1.keywords = keywords;
-            node1.textembedding = textembedding;
-            appendNodes([node1]);
-        });
-        // Node2: extract keywords and calculate textembedding
         const relevant_messages_2 = node2.messages.map(m => m.content);
-        Promise.all([
-            extract_keywords({"inputs": relevant_messages_2}),
-            text_embedding(relevant_messages_2)
-        ]).then(([keywords, textembedding]) => {
-            node2.keywords = keywords;
-            node2.textembedding = textembedding;
-            appendNodes([node2]);
-        });
-        // Node3: extract keywords and calculate textembedding
         const relevant_messages_3 = node3.messages.map(m => m.content);
         Promise.all([
+            extract_keywords({"inputs": relevant_messages_1}),
+            extract_keywords({"inputs": relevant_messages_2}),
             extract_keywords({"inputs": relevant_messages_3}),
-            text_embedding(relevant_messages_3)
-        ]).then(([keywords, textembedding]) => {
-            node3.keywords = keywords;
-            node3.textembedding = textembedding;
-            appendNodes([node3]);
+            text_embedding(relevant_messages_1),
+            text_embedding(relevant_messages_2),
+            text_embedding(relevant_messages_3),
+            text_embedding([])
+        ]).then(([keywords1, keywords2, keywords3, textembedding1, textembedding2, textembedding3, textembedding_split]) => {
+            node1.keywords = keywords1;
+            node2.keywords = keywords2;
+            node3.keywords = keywords3;
+            node1.textembedding = textembedding1;
+            node2.textembedding = textembedding2;
+            node3.textembedding = textembedding3;
+            node_split.textembedding = textembedding_split;
+            appendNodes([node_split, node1, node2, node3]);
         });
     }
          

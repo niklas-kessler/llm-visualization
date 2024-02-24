@@ -112,6 +112,11 @@ function normalizeArray(arr: number[]): number[] {
   const minValue = Math.min(...arr);
   const maxValue = Math.max(...arr);
 
+  // prevent NaN returns
+  if (minValue === maxValue) {
+    return arr.map(() => 0.5);
+  }
+
   const normalizedArray = arr.map((value) => (value - minValue) / (maxValue - minValue));
 
   return normalizedArray;
@@ -121,13 +126,12 @@ function normalizeArray(arr: number[]): number[] {
 function mapToOneDimension(matrix: number[][], method: "PCA"|"UMAP" = "PCA"): number[] {
   let result: number[] = [];
   if (method === "PCA"){
-    console.log("PCA");
     var PCA = require('pca-js');
     const vectors = PCA.getEigenVectors(matrix);
     result = PCA.computeAdjustedData(matrix, vectors[0]).adjustedData[0];
+    console.log("pca result: ", matrix, result, normalizeArray(result));
   } 
   else if (method === "UMAP"){
-    console.log("UMAP");
     const n = matrix.length;
     const reducer = new UMAP({ nComponents: 1, nNeighbors: n-1 });
     result = reducer.fit(matrix).map((x: number[]) => x[0]);
@@ -147,15 +151,16 @@ function seqmatch(str1: string, str2: string): number {
 
 // Using KeywordOverlap, return the similarity of two strings as a number between 0 and 1
 function keyword_overlap(keywords1: string[], keywords2: string[]): number {
+  if (keywords1.length === 0 || keywords2.length === 0) return 0;
   const overlap1 = keywords1.filter((keyword) => keywords2.includes(keyword)).length;
   const overlap2 = keywords2.filter((keyword) => keywords1.includes(keyword)).length;
-  console.log("keywords1", keywords1, "keywords2", keywords2, "overlap1", overlap1, "overlap2", overlap2);
   return Math.max(overlap1, overlap2) / Math.min(keywords1.length, keywords2.length);
 }
 
 // Calculate the text embedding of a string
 async function text_embedding(inputs: string[]){
   const str = inputs.join(" ");
+  if(str === "") return Array(256).fill(0);
   const response = await fetch("/api/get_text_embedding", {
     method:"POST",
     headers:{
@@ -167,6 +172,7 @@ async function text_embedding(inputs: string[]){
   });
   
   const result = await response.json();
+  console.log("embedding", result.data[0].embedding);
   return result.data[0].embedding;
 }
 
