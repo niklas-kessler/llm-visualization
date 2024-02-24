@@ -250,7 +250,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             })
         });
         const result = await response.json();
-        console.log(result)
 
         const res_mess = result.choices[0].message;
         const assistant_message: MessageType = {role: res_mess.role, content: res_mess.content? res_mess.content : res_mess.tool_calls.map((tool_call: any) => tool_call.function.name + ", " + tool_call.function.arguments).join("\n ")}
@@ -450,7 +449,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     }
          
     async function reasoning_aggregate() {
-        console.log("reasoning_aggregate, selectedNode", selectedNode)
         if (selectedNode === -1) return;
         if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
 
@@ -459,8 +457,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
         async function aggregate(node: Node, i:number) {
 
-            console.log("aggregate with node", node, "i ", i)
-            
             if (node.type !== "split")
                 return;
             
@@ -469,16 +465,12 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             
             // collect branches independently
             for (let childId of node.children ?? []) {
-                console.log("childId", childId)
                 let curr_node = nodes[childId];
-                console.log("curr_node1", curr_node)
                 let branch: MessageType[] = [];
-                console.log("curr_node2", curr_node)
 
                 // until leaf
                 while(!curr_node.leaf()) {
-                    console.log("curr_node3", curr_node)
-
+                
                     // further inner split
                     if (curr_node.type === "split") {
 
@@ -489,11 +481,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
                         // not yet aggregated
                         else {
                             branch.push(...curr_node.messages); // redundant (split nodes usually have no messages)
-                            if(i<3) {
-                                console.log("i" ,i);
-                                return;
-                            }
-                                //aggregate(curr_node, (i+1));  //TODO: fix endless recursive call
                         }
                     // else collect and move on
                     } else {

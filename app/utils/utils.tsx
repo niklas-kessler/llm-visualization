@@ -53,23 +53,6 @@ const node_color = (type: string, selected: boolean) => {
 };
 
 async function extract_keywords(data: {inputs: string[]}) {
-  // HuggingFace Model
-  /*const response = await fetch(
-		"https://api-inference.huggingface.co/models/yanekyuk/bert-uncased-keyword-extractor",
-		{
-			headers: { Authorization: "Bearer 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" },
-			method: "POST",
-			body: JSON.stringify(data),
-		}
-	);
-	const result = await response.json();
-  console.log("backend: keyword extraction1", result)
-  if(!result.error){
-    const result_arr = result.flatMap((entry: any) => entry.map((keyword: { word: string, score: number }) => keyword.word));
-    console.log("backend: keyword extraction2", result_arr);
-    return result_arr;
-  }
-  else return [];*/
   //ChatGPT Model
   const response = await fetch("/api/chatgpt", {
     method:"POST",
@@ -83,8 +66,6 @@ async function extract_keywords(data: {inputs: string[]}) {
   });
   
   const result = await response.json();
-  console.log(result)
-
   let res_mess: string = result.choices[0].message.content ?? "";
   
   // if the response contains some message like 'These are the Keywords: ', we throw that first part away
@@ -129,7 +110,6 @@ function mapToOneDimension(matrix: number[][], method: "PCA"|"UMAP" = "PCA"): nu
     var PCA = require('pca-js');
     const vectors = PCA.getEigenVectors(matrix);
     result = PCA.computeAdjustedData(matrix, vectors[0]).adjustedData[0];
-    console.log("pca result: ", matrix, result, normalizeArray(result));
   } 
   else if (method === "UMAP"){
     const n = matrix.length;
@@ -172,12 +152,12 @@ async function text_embedding(inputs: string[]){
   });
   
   const result = await response.json();
-  console.log("embedding", result.data[0].embedding);
   return result.data[0].embedding;
 }
 
 // Calculate the similarity of nodes based on the sequence-match-similarity of their messages
 function node_similarity_seqmatch(nodes: { [id: number]: Node }, reduction_method?: "PCA"|"UMAP"): { [id: number]: Node } {
+  
   const stringSet = Object.values(nodes).map((node) => node.messages.map((message) => message.content).join(" "));
   const n = stringSet.length;
   if (n <= 1) return nodes;
@@ -195,10 +175,11 @@ function node_similarity_seqmatch(nodes: { [id: number]: Node }, reduction_metho
 
   const similarityValues = mapToOneDimension(similarityMatrix, reduction_method);  
 
-  nodes = Object.values(nodes).map((node, index) => {
+  nodes = Object.values(nodes).reduce((acc: { [id: number]: Node }, node: Node, index: number) => {
     node.similarityValue = similarityValues[index];
-    return node;
-  });
+    acc[node.id] = node;
+    return acc;
+  }, {});
   return nodes;
 }
 
@@ -220,11 +201,11 @@ function node_similarity_keyword_overlap(nodes: { [id: number]: Node }, reductio
   }
   
   const similarityValues = mapToOneDimension(similarityMatrix, reduction_method);  
-
-  nodes = Object.values(nodes).map((node, index) => {
+  nodes = Object.values(nodes).reduce((acc: { [id: number]: Node }, node: Node, index: number) => {
     node.similarityValue = similarityValues[index];
-    return node;
-  });
+    acc[node.id] = node;
+    return acc;
+  }, {});
   return nodes;
 }
 
@@ -236,10 +217,11 @@ function node_similarity_text_embedding(nodes: { [id: number]: Node }, reduction
 
   const similarityValues = mapToOneDimension(embedding_matrix, reduction_method);  
 
-  nodes = Object.values(nodes).map((node, index) => {
+  nodes = Object.values(nodes).reduce((acc: { [id: number]: Node }, node: Node, index: number) => {
     node.similarityValue = similarityValues[index];
-    return node;
-  });
+    acc[node.id] = node;
+    return acc;
+  }, {});
 
   return nodes;
 }
