@@ -89,40 +89,18 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         }
     }
 
-    const initNodes = () => {
-        const newNodes: Node[] = [
-            new Node({type:"user", messages: [{role:'user', content:'A users compliacted question.'}], children:[1]}),
-            new Node({type:"forward", messages: [{role:'assistant', content:'The LLMs initial stupid answer.'}], children:[2], parents:[0]}),
-            new Node({type:"split", messages: [], children:[3,4,5], parents:[1]}),
-            new Node({type:"tools", messages: [{role:'system', content:'Make tool-calls to check and improve your answer'},{role:'assistant', content:'Tool-Calls: google(Pandas)'},{role:'system', content:'Those are the tools results: ...'}], children:[6], parents:[2]}),
-            new Node({type:"forward", messages: [{role:'assistant', content:'Another reasoning step'}], children:[6], parents:[2]}),
-            new Node({type:"forward", messages: [{role:'assistant', content:'Another reasoning step'}], children:[6], parents:[2]}),
-            new Node({type:"aggregate", messages: [{role:'system', content:'Aggregate the previous steps'},{role:'assistant', content:'Most prompisin seems the answer from google, indicating that ...'}], children:[7], parents:[3,4,5]}),
-            new Node({type:"final",  messages: [{role:'system', content:'Based on all the reasoning steps, give a final improved answer'},{role:'assistant', content:'Final answer: ...'}], children:[], parents:[6]}),
-            ];
-        let nodeDict: {[id:number]:Node} = {};
-        
-        for (let n of newNodes){
-            nodeDict[n.id] = n;
-        }
-                
-        setSelectedNode(idCount + Node.idCount_temp-1);
-        return nodeDict;
-    }
-
-    const [selectedNode, setSelectedNode ] = useState<number>(-1); // initialize with -1
+    
+    const [selectedNode, setSelectedNode ] = useState<number>(-1); // initialize selectedNode with -1
     const [chatMessages, setChatMessages] = useState<MessageType[]>([]);
     const [idCount, setIdCount] = useState<number>(0); // use as (idCount + Node.idCount_temp) to get the actual current id
     const [nodes, setNodes] = useState<{ [id: number]: Node }>({});
-
-    console.log("rerender, nodes:", nodes)
-    // print level of nodes
 
     // update collected messages, triggered when selectedNode is changed
     useEffect(() => {
         collectChat();
     }, [selectedNode])
 
+    // collect all messages from the head node until a specific node
     function collectChat ( nodeId: number = selectedNode ) : MessageType[] {
         if (nodeId === -1) {
             setChatMessages([]);
@@ -136,12 +114,12 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         
         let aggregated = 0; // depth-level
 
-        // backtrack to beginning, collect important nodes on the fly
+        // backtrack to beginning, collecting all nodes on the fly
         while (!node.head()) {
             if (aggregated === 0) {
                 messageNodes.push(node);
             }
-            // ignore branches that have been aggregated already
+            // ignore branches that have been aggregated already and only collect the aggregate-node
             if (node.type === "aggregate"){
                 aggregated++;
             } else if (node.type === "split" && aggregated > 0){
@@ -152,9 +130,10 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             node = nodes[node.parents?.[0] as number];
             prevNode = node;
         }
-        //push head
+        //push head node as well
         messageNodes.push(node); 
         
+        // traverse nodes in reverse order and get the messages in the correct order
         messageNodes.reverse();
         for (let n of messageNodes) {
             for (let m of n.messages){
@@ -165,6 +144,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         return chatMessages;
     }
 
+    // append new nodes to the graph, select the latest node
     function appendNodes (newNodes: Node[]) {
         let updatedNodes = {...nodes};
         for (let n of newNodes){
@@ -174,8 +154,11 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         setSelectedNode(newNodes[newNodes.length - 1].id);
     }
 
+    // operations
 
+    // user operation
     async function reasoning_user(prompt: string) {
+        // only allowed if selected node is a leaf or no node is selected
         if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
 
         const userMessage: MessageType = {role: "user", content: prompt};            
@@ -198,8 +181,9 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         });
     }
 
+    // forward operation
     async function reasoning_forward() {
-
+        // only allowed if selected node is a leaf or no node is selected
         if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
 
         const response = await fetch("/api/chatgpt", {
@@ -233,8 +217,9 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         });
     }
 
-
+    // tools operation
     async function reasoning_tools() {
+        // only allowed if selected node is a leaf or no node is selected
         if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
 
         const system_message_before = {role:'system', content:'Make tool-calls to check and improve your answer'}
@@ -252,11 +237,12 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const result = await response.json();
 
         const res_mess = result.choices[0].message;
-        const assistant_message: MessageType = {role: res_mess.role, content: res_mess.content? res_mess.content : res_mess.tool_calls.map((tool_call: any) => tool_call.function.name + ", " + tool_call.function.arguments).join("\n ")}
 
         let tool_result = "";
         let tool_results_string = "";
 
+        // iterate over tool calls and get results
+        // currently all tool calls are passed to the simulate_tool function, this could be replaced by a dynamic call to the respective tool
         for (let tool_call of res_mess.tool_calls) {
             const tool_answer = await fetch("/api/simulate_tool", {
                 method: "POST",
@@ -269,13 +255,13 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
                 })
             });
             tool_result = (await tool_answer.json()).result;
-            tool_results_string += "Tool " + tool_call.function.name + " with arguments " + tool_call.function.arguments + " gave result: " + tool_result + "\n";    
+            tool_results_string += "Tool " + tool_call.function.name + " with arguments " + tool_call.function.arguments + " gave result: " + tool_result + ".";    
         }
         
-        
+        // Tool results are added as a message. This way the model can react to the results in the next step.
         const system_message_after = { role: 'system', content: tool_results_string };
 
-        const node: Node = new Node({ type: "tools", messages: [system_message_before, assistant_message, system_message_after], parents: [], children: [] });
+        const node: Node = new Node({ type: "tools", messages: [system_message_before, system_message_after], parents: [], children: [] });
         if (selectedNode !== -1) {
             node.parents = [selectedNode];
             nodes[selectedNode].children?.push(node.id);
@@ -293,7 +279,10 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         });
     }
 
+    // delete all children for a node (helper function for backward operation)
     function deleteChildren(nodeId: number, nodes: { [id: number]: Node }) {
+        
+        // BFS to delete all children
         const queue: number[] = [nodeId];
         const visited: Set<number> = new Set();
     
@@ -314,12 +303,15 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         }
     }
 
+    // backward operation
     function reasoning_backward() {
         if (selectedNode === -1) return;
 
         const curr_node = nodes[selectedNode];
         const parentIds = curr_node.parents?.map(parentId => nodes[parentId].id) ?? [];
         let updatedNodes = {...nodes};
+        
+        // first, delete all children if there are any
         if (updatedNodes[selectedNode].children) {
             deleteChildren(selectedNode, updatedNodes);
         } 
@@ -335,6 +327,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         setSelectedNode(parentIds?.length > 0 ? parentIds[0] : -1);
     }
 
+    // refine operation
     async function reasoning_refine() {
         if (selectedNode === -1) return;
         if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
@@ -374,6 +367,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         });
     }
 
+    // split operation
     async function reasoning_parallel_split() {        
         if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
 
@@ -447,7 +441,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             appendNodes([node_split, node1, node2, node3]);
         });
     }
-         
+     
+    // aggregate operation
     async function reasoning_aggregate() {
         if (selectedNode === -1) return;
         if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
@@ -557,6 +552,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         await aggregate(split_node, 0);        
     }
 
+    // attention operation
     async function reasoning_attention() {
         if (selectedNode === -1) return;
         if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
