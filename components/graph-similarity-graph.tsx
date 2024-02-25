@@ -1,7 +1,6 @@
- /* eslint-disable react/no-unstable-nested-components */
  import { GraphNode, GraphLink, Node } from '@/app/utils/types';
  import { Graph } from '@visx/network';
- import { node_text, similarity_node_color } from '@/app/utils/utils';
+ import { similarity_node_color } from '@/app/utils/utils';
  import { useState } from 'react';
  import { Zoom } from '@visx/zoom';
  import { RectClipPath } from '@visx/clip-path';
@@ -19,7 +18,7 @@
  
  export default function GraphSimGraph({ fullScreen, nodes, color1, color2 }: GraphSGProps) {
  
-   const width = fullScreen? 1260 : 620;
+   const width = fullScreen? 1260 : 620; // Due to the library, there is no easy way to make width and height dynamic
    const height = 420;
    const [showMiniMap, setShowMiniMap] = useState<boolean>(true);
    const initialTransform = {
@@ -97,7 +96,7 @@
            strokeWidth={6}
          />
          <text fontSize="10px" textAnchor="middle">
-           {/*node_text(node.type)*/node.similarityValue.toFixed(2)}
+           {node.similarityValue.toFixed(2)}
          </text>
        </g>
      );

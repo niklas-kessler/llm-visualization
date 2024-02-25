@@ -18,6 +18,7 @@ export default function KeywordGraph({ fullScreen, nodes, setNodes }: KeywordGra
 
     useEffect(recalculateShownKeywords, [keywordSettings])
 
+    // Set the keyword settings respectively, when a node is selected for keyword caclulation
     function onSetSelectedKeywordNode(nodeId: number) {
         setSelectedKeywordNode(nodeId);
 
@@ -40,6 +41,7 @@ export default function KeywordGraph({ fullScreen, nodes, setNodes }: KeywordGra
         setKeywordSettings(updatedKeywordSettings);
     }
 
+    // Recalculate which keywords should be shown for each node
     function recalculateShownKeywords() {
         // For each node...
         let updatedNodes = {...nodes};

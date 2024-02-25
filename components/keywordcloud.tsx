@@ -15,7 +15,7 @@ export default function Keywordcloud({ width, height, keywords, keywordSettings 
     
     const defaultColors = ['#143059', '#2F6B9A', '#82a6c2'];
 
-
+    // Calculate the frequency of each word, so that the most frequent words are the largest
     function wordFreq(): Keyword[] {
         const freqMap: Record<string, number> = {};
 

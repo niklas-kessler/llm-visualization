@@ -1,3 +1,3 @@
 export default function Settings() {
-    return <p>Settings Page</p>
+    return <p>This component could be used for further settings.</p>
 }

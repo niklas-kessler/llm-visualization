@@ -13,10 +13,6 @@ export default function ChatInput({ reasoning_functions }: ChatInputProps) {
     const [textInput, setTextInput] = useState<string>('');
     const [showButtons, setShowButtons] = useState(false);
 
-    const handlePlusButtonClick = () => {
-        setShowButtons(false);
-    };
-
     return (
         <div className="flex">
             <ReasoningButtons showButtons={showButtons} setShowButtons={setShowButtons} reasoning_functions={reasoning_functions} horizontal={true}/>

@@ -5,13 +5,12 @@ import GraphSimGraph from "./graph-similarity-graph";
 
 interface SimilarityGraphProps {
     fullScreen: boolean,
-    nodes: { [id: number]: Node },
-    selectedNode: number,
-    setSelectedNode: (id: number) => void
+    nodes: { [id: number]: Node }
 }
 
-export default function SimilarityGraph( { fullScreen, nodes, selectedNode, setSelectedNode }: SimilarityGraphProps) {
+export default function SimilarityGraph( { fullScreen, nodes }: SimilarityGraphProps) {
     
+    // settings for similarity graph
     const [settings, setSettings] = useState<SimilaritySettings>({
         measurement: "keywordoverlap",
         reduction_method: "PCA",

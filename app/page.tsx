@@ -8,7 +8,7 @@ export default function Home() {
   
   const [showHistory, setShowHistory] = useState(false);
   const [isMultiView, setMultiView] = useState(true);
-  const [activeWindows, setActiveWindows]= useState<string[]>(["Chat"]);  // TODO: BugFix: Initializing with KeywordGraph causes hydration-error
+  const [activeWindows, setActiveWindows]= useState<string[]>(["Chat"]); 
 
   const handleSingleViewClick = () => {
     setMultiView(false);

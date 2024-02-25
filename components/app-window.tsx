@@ -100,7 +100,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         collectChat();
     }, [selectedNode])
 
-    // collect all messages from the head node until a specific node
+    // collect all messages from the head node until a specific node, per default until the selected node
     function collectChat ( nodeId: number = selectedNode ) : MessageType[] {
         if (nodeId === -1) {
             setChatMessages([]);
@@ -154,7 +154,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         setSelectedNode(newNodes[newNodes.length - 1].id);
     }
 
-    // operations
+    // operations for reasoning are also called reasoning functions in the following
 
     // user operation
     async function reasoning_user(prompt: string) {

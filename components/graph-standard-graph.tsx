@@ -19,7 +19,7 @@ export const background = '#ccc';
 
 export default function GraphSG({ fullScreen, nodes, selectedNode, setSelectedNode }: GraphSGProps) {
 
-  const width = fullScreen? 1260 : 620;
+  const width = fullScreen? 1260 : 620; // Due to the library, there is no easy way to make width and height dynamic
   const height = 420;
   const [showMiniMap, setShowMiniMap] = useState<boolean>(true);
   const initialTransform = {

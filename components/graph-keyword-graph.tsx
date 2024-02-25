@@ -18,7 +18,7 @@ export const background = '#ccc';
 
 export default function GraphKeywordGraph({ fullScreen, nodes, selectedKeywordNode, setSelectedKeywordNode, keywordSettings }: GraphKeywordGraphProps) {
   
-  const width = fullScreen? 1260 : 620;
+  const width = fullScreen? 1260 : 620; // Due to the library, there is no easy way to make width and height dynamic
   const height = 420;
   const [showMiniMap, setShowMiniMap] = useState<boolean>(true);
   const initialTransform = {
@@ -37,7 +37,7 @@ export default function GraphKeywordGraph({ fullScreen, nodes, selectedKeywordNo
     setSelectedKeywordNode(-1);
   }
 
-  //group nodes by level
+  // group nodes by level
   const nodesByLevel = Object.values(nodes).reduce((groups, node) => {
     const key = node.level(nodes);
     if (!groups[key]) {
@@ -47,7 +47,7 @@ export default function GraphKeywordGraph({ fullScreen, nodes, selectedKeywordNo
     return groups;
   }, {} as { [key: string]: Node[] });
 
-  //map nodes-dict to array of nodes with x and y coordinates
+  // map nodes-dict to array of nodes with x and y coordinates
   for (const key in nodesByLevel) {
     const n_nodes = nodesByLevel[key].length;
     for (let i = 0; i < n_nodes; i++) {
@@ -71,7 +71,7 @@ export default function GraphKeywordGraph({ fullScreen, nodes, selectedKeywordNo
     }
   }
 
-  //map nodes dict to array of links
+  // map nodes dict to array of links
   const linksArr: GraphLink[] = []
   for (const value of nodesArr) {
     for (const child of value.children ?? []) {
@@ -92,7 +92,7 @@ export default function GraphKeywordGraph({ fullScreen, nodes, selectedKeywordNo
     links: linksArr,
   };
 
-  // Node
+  // single keyword node
   function GraphNode({ node }: { node: GraphNode }) {
     return (
       <g 
@@ -120,7 +120,7 @@ export default function GraphKeywordGraph({ fullScreen, nodes, selectedKeywordNo
     );
   }
 
-  // Calculate keywords when a node is clicked, set nodes from AppWindow
+  // calculate keywords when a node is clicked, set nodes from AppWindow
   function calculateKeywords(nodeId: number, keywords?: string[]) {
     if (!keywords) return;
     setSelectedKeywordNode(nodeId);
