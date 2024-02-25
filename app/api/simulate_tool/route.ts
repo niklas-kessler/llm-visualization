@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest){
-
+    /** This function can be used to simulate a tool. */
     const params = await request.json();
     const tool = params.tool;
     const tool_args = params.tool_args;

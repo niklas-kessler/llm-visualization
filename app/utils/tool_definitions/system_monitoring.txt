@@ -1,4 +1,4 @@
-** all simulated
+** This is an example set of (fictional) functions related to checking problems with the computer. **
 [
     {
       type: "function",

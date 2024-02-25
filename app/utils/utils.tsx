@@ -1,3 +1,9 @@
+import { scaleLinear } from '@visx/scale';
+import { UMAP } from 'umap-js';
+import * as difflib from 'difflib';
+import { Node } from './types';
+
+// returns the text representation of a node type
 const node_text = (type: string) => {
     const textMap: { [key: string]: string } = {
       user: "U",
@@ -15,16 +21,16 @@ const node_text = (type: string) => {
     return textMap[type] || textMap.default;
 };
 
-import { scaleLinear } from '@visx/scale';
-
+// returns the color of a node in the similarity graph, based on its similarity value and the current linear color space
 const similarity_node_color = (similarity: number, color1: string, color2: string) => {
   const color = scaleLinear({
-  domain: [0, 1],
-  range: [color1, color2],
-});
+    domain: [0, 1],
+    range: [color1, color2],
+  });
   return color(similarity);  
 }
 
+// returns the color of a node in the standard graph, based on its type and whether it is selected
 const node_color = (type: string, selected: boolean) => {
     
   const colorMap_selected: { [key: string]: string } = {
@@ -52,6 +58,7 @@ const node_color = (type: string, selected: boolean) => {
   return selected? (colorMap_selected[type] || "#ff0000") : (colorMap_unselected[type] || "#ff0000"); // Default: Alert Red
 };
 
+// prompt the LLM to extract keywords from a list of messages
 async function extract_keywords(data: {inputs: string[]}) {
   //ChatGPT Model
   const response = await fetch("/api/chatgpt", {
@@ -81,10 +88,7 @@ async function extract_keywords(data: {inputs: string[]}) {
   return content;
 }
 
-import { UMAP } from 'umap-js';
-import * as difflib from 'difflib';
-import { Node } from './types';
-
+// normalize an array of numbers to a range between 0 and 1
 function normalizeArray(arr: number[]): number[] {
   if (arr.length === 0) {
     return arr; // Empty array, nothing to normalize
@@ -123,13 +127,13 @@ function mapToOneDimension(matrix: number[][], method: "PCA"|"UMAP" = "PCA"): nu
   return normalizeArray(result);
 }
 
-// Using a SequenceMatcher, calculate the similarity of two strings as a number between 0 and 1
+// using a SequenceMatcher, calculate the similarity of two strings as a number between 0 and 1
 function seqmatch(str1: string, str2: string): number {
   const seq = new difflib.SequenceMatcher(null, str1, str2);
   return seq.ratio();
 }
 
-// Using KeywordOverlap, return the similarity of two strings as a number between 0 and 1
+// using KeywordOverlap, return the similarity of two strings as a number between 0 and 1
 function keyword_overlap(keywords1: string[], keywords2: string[]): number {
   if (keywords1.length === 0 || keywords2.length === 0) return 0;
   const overlap1 = keywords1.filter((keyword) => keywords2.includes(keyword)).length;
@@ -137,7 +141,7 @@ function keyword_overlap(keywords1: string[], keywords2: string[]): number {
   return Math.max(overlap1, overlap2) / Math.min(keywords1.length, keywords2.length);
 }
 
-// Calculate the text embedding of a string
+// calculate the text embedding of a string
 async function text_embedding(inputs: string[]){
   const str = inputs.join(" ");
   if(str === "") return Array(256).fill(0);
@@ -155,7 +159,7 @@ async function text_embedding(inputs: string[]){
   return result.data[0].embedding;
 }
 
-// Calculate the similarity of nodes based on the sequence-match-similarity of their messages
+// calculate the similarity of nodes based on the sequence-match-similarity of their messages
 function node_similarity_seqmatch(nodes: { [id: number]: Node }, reduction_method?: "PCA"|"UMAP"): { [id: number]: Node } {
   
   const stringSet = Object.values(nodes).map((node) => node.messages.map((message) => message.content).join(" "));
@@ -164,6 +168,7 @@ function node_similarity_seqmatch(nodes: { [id: number]: Node }, reduction_metho
 
   let similarityMatrix: number[][] = [];
 
+  // calculate the similarity of each pair of nodes
   for (let i = 0; i < n; i++) {
     const row: number[] = [];
     for (let j = 0; j < n; j++) {
@@ -173,6 +178,7 @@ function node_similarity_seqmatch(nodes: { [id: number]: Node }, reduction_metho
     similarityMatrix.push(row);
   }
 
+  // reduce to 1-D
   const similarityValues = mapToOneDimension(similarityMatrix, reduction_method);  
 
   nodes = Object.values(nodes).reduce((acc: { [id: number]: Node }, node: Node, index: number) => {
@@ -183,7 +189,7 @@ function node_similarity_seqmatch(nodes: { [id: number]: Node }, reduction_metho
   return nodes;
 }
 
-// Calculate the similarity of nodes based on the keyword-overlap-similarity of their messages
+// calculate the similarity of nodes based on the keyword-overlap-similarity of their messages
 function node_similarity_keyword_overlap(nodes: { [id: number]: Node }, reduction_method?: "PCA"|"UMAP"): { [id: number]: Node } {
   const keywords = Object.values(nodes).map((node) => node.keywords ?? []); 
   const n = keywords.length;
@@ -191,6 +197,7 @@ function node_similarity_keyword_overlap(nodes: { [id: number]: Node }, reductio
 
   let similarityMatrix: number[][] = [];
 
+  // calculate the similarity of each pair of nodes
   for (let i = 0; i < n; i++) {
     const row: number[] = [];
     for (let j = 0; j < n; j++) {
@@ -200,7 +207,9 @@ function node_similarity_keyword_overlap(nodes: { [id: number]: Node }, reductio
     similarityMatrix.push(row);
   }
   
+  // reduce to 1-D
   const similarityValues = mapToOneDimension(similarityMatrix, reduction_method);  
+
   nodes = Object.values(nodes).reduce((acc: { [id: number]: Node }, node: Node, index: number) => {
     node.similarityValue = similarityValues[index];
     acc[node.id] = node;
@@ -209,12 +218,15 @@ function node_similarity_keyword_overlap(nodes: { [id: number]: Node }, reductio
   return nodes;
 }
 
-// Calculate the similarity of nodes based on the text-embedding-similarity of their messages
+// calculate the similarity of nodes based on the text-embedding-similarity of their messages
 function node_similarity_text_embedding(nodes: { [id: number]: Node }, reduction_method?: "PCA"|"UMAP"): { [id: number]: Node }{
+  
+  // get text embeddings, which have already been calculated at creation of the nodes
   const embedding_matrix = Object.values(nodes).map((node) => node.textembedding ?? []);
   const n = embedding_matrix.length;
   if (n <= 1) return nodes;
 
+  // reduce to 1-D
   const similarityValues = mapToOneDimension(embedding_matrix, reduction_method);  
 
   nodes = Object.values(nodes).reduce((acc: { [id: number]: Node }, node: Node, index: number) => {

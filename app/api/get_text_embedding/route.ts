@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai"
 
 export async function POST(request: NextRequest){
+    /** This function can be used to get the text-embedding for a string. */
     const openai = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY
     })
