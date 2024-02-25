@@ -340,7 +340,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
 
         // system prompt
-        const refine_prompt="Please overthink your previous answer. Is there anything incorrect"
+        const refine_prompt="Reflect and overthink your previous answer. Is there anything incorrect?"
         const system_message: MessageType = {role: "system", content: refine_prompt}
 
         // get response
@@ -481,6 +481,11 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
                         // not yet aggregated
                         else {
                             branch.push(...curr_node.messages); // redundant (split nodes usually have no messages)
+                            await aggregate(curr_node,(i+1)); 
+                            // when trying to recursevly aggregate inner most splits and afterwards continue with outer split,
+                            // a endless loop appears that couldn't be fixed yet. Therefore we return here and settle with only 
+                            // aggergating the inner most split for now, and leave it to the user to call the aggregate opearation again.
+                            return;
                         }
                     // else collect and move on
                     } else {
@@ -545,6 +550,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
                 aggregate_node.keywords = keywords;
                 aggregate_node.textembedding = textembedding;
                 appendNodes([aggregate_node]);
+                return;
             });
         }
 

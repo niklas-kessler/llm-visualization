@@ -15,54 +15,110 @@ export async function POST(request: NextRequest){
     {
       type: "function",
       function: {
-        name: "get_item_price",
-        description: "Get the price to a purchasable item, e.g. merchandise.",
+        name: "get_cpu_usage",
+        description: "Get the current overall CPU usage in percentage.",
         parameters: {
           type: "object",
           properties: {
-            item_id: {
-              type: "string",
-              description: "The id of the purchasable item",
-            },
           },
-          required: ["item_id"],
+          required: [],
         },
       }
     },
     {
       type: "function",
       function: {
-        name: "get_available_merch_products",
-        description: "Get availabilty and item_ids about merch products of a certain person.",
+        name: "get_thread_cpu_usage",
+        description: "Get the CPU usage of a specific thread in percentage.",
         parameters: {
           type: "object",
           properties: {
-            name: {
+            thread_id: {
               type: "string",
-              description: "The name of the person, e.g. Bruno Mars",
+              description: "The id of the thread to get the CPU usage for.",
             },
           },
-          required: ["name"],
+          required: ["thread_id"],
         },
       }
     },
     {
       type: "function",
       function: {
-        name: "get_info_about_person",
-        description: "Get information to a certain person, about what their job, private life and what they are famous for.",
+        name: "get_threads",
+        description: "Get all currently running threads. Returns a list of the threads with their respective ids.",
         parameters: {
           type: "object",
           properties: {
-            name: {
-              type: "string",
-              description: "The name of the person, e.g. Bruno Mars",
-            },
           },
-          required: ["name"]
+          required: [],
         },
       }
     },
+    {
+      type: "function",
+      function: {
+        name: "get_disk_space",
+        description: "Get the available disk space of the system. Returns the amount of free disk space.",
+        parameters: {
+          type: "object",
+          properties: {
+          },
+          required: [],
+        },
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "get_network_latency",
+        description: "Get the current network latency in either seconds or milliseconds.",
+        parameters: {
+          type: "object",
+          properties: {
+            unit: {
+              type: "string",
+              description: "Either 'seconds' or 'milliseconds'.",
+            },
+          },
+          required: ["unit"],
+        },
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "get_service_status",
+        description: "Get the status of a specific service. Returns either 'running' or 'stopped'.",
+        parameters: {
+          type: "object",
+          properties: {
+            service_id: {
+              type: "string",
+              description: "The id of the service to get the status for.",
+            },
+          },
+          required: ["service_id"],
+        },
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "get_service_id",
+        description: "Find a service by its name and return the id.",
+        parameters: {
+          type: "object",
+          properties: {
+            service: {
+              type: "string",
+              description: "The name of the service to get the id for.",
+            },
+          },
+          required: ["service"],
+        },
+      }
+    }
   ]
   
   const standardMessages = [{
