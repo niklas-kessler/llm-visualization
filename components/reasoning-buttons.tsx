@@ -5,10 +5,11 @@ interface ReasoningButtonsProps {
     showButtons: boolean,
     setShowButtons: (showButtons: boolean) => void,
     reasoning_functions: ReasoningFunctionsType,
+    reasoning_auto: () => Promise<void>,
     horizontal: boolean
 }
 
-export default function ReasoningButtons({ showButtons, setShowButtons, reasoning_functions, horizontal }: ReasoningButtonsProps) {
+export default function ReasoningButtons({ showButtons, setShowButtons, reasoning_functions, reasoning_auto, horizontal }: ReasoningButtonsProps) {
     const { forward, tools, backward, refine, parallel_split, aggregate, attention } = reasoning_functions
     return (
         <div className={horizontal ? "flex" : "flex-col"}>
@@ -39,8 +40,11 @@ export default function ReasoningButtons({ showButtons, setShowButtons, reasonin
                 <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={attention}>
                     {node_text("attention")}
                 </button>
-                <button className={`w-11 h-11 rounded-${horizontal?"r":"b"}-md border-2 border-zinc-700 bg-zinc-400`} onClick={backward}>
+                <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={backward}>
                     {node_text("backward")}
+                </button>
+                <button className={`w-11 h-11 rounded-${horizontal?"r":"b"}-md border-2 border-zinc-700 bg-zinc-400`} onClick={reasoning_auto}>
+                    {node_text("auto")}
                 </button>               
             </div>
             }

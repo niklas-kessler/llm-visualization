@@ -591,6 +591,36 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         });
     }
 
+    // operation for automatically choosing an operation
+    async function reasoning_auto() {
+        if (selectedNode === -1) return;
+        if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
+
+        const choose_operation_prompt = "To enhance your reasoning process, we have integrated you into a larger system, where the user can input its request and then you will find the solution step by step. Each step is called an operation and there are different operations available. Choose, which operation would be the most helpful to continue the reasoning process."
+        const system_message: MessageType = {role: "system", content: choose_operation_prompt}
+        
+        // get response
+        const response = await fetch("/api/chatgpt", {
+            method:"POST",
+            headers:{
+            "Content-Type": "application/json",
+            },
+            body:JSON.stringify({
+            messages: [...chatMessages, system_message],
+            auto_mode: true
+            })
+        });
+        const result = await response.json();
+        const res_mess = result.choices[0].message;
+        let operation = res_mess.tool_calls[0].function.name ?? "forward";    //default to forward operation
+        if (operation === "parallelsplit") operation = "parallel_split";    //rename operation to match reasoning functions, see also app/api/chatgpt/route.ts
+
+        if(reasoning_functions[operation]){
+            await reasoning_functions[operation]();
+        }
+        return;
+    }
+
     const reasoning_functions: ReasoningFunctionsType = {
         user: reasoning_user,
         forward: reasoning_forward,
@@ -599,7 +629,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         refine: reasoning_refine,
         parallel_split: reasoning_parallel_split,
         aggregate: reasoning_aggregate,
-        attention: reasoning_attention,
+        attention: reasoning_attention    
     }
 
     return(
@@ -611,11 +641,11 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
                     </div>
                 )}
                 <div className="flex-1">
-                    <Window content={activeWindows[0]} fullScreen={!activeWindows[1]} nodes={nodes} setNodes={setNodes} chatMessages={chatMessages} selectedNode={selectedNode} setSelectedNode={setSelectedNode} reasoning_functions={reasoning_functions}/>
+                    <Window content={activeWindows[0]} fullScreen={!activeWindows[1]} nodes={nodes} setNodes={setNodes} chatMessages={chatMessages} selectedNode={selectedNode} setSelectedNode={setSelectedNode} reasoning_functions={reasoning_functions} reasoning_auto={reasoning_auto}/>
                 </div>
                 {activeWindows[1] && (
                     <div className="flex-1 border-l-2 border-zinc-400">
-                        <Window content={activeWindows[1]} fullScreen={false} nodes={nodes} setNodes={setNodes} chatMessages={chatMessages} selectedNode={selectedNode} setSelectedNode={setSelectedNode} reasoning_functions={reasoning_functions}/>
+                        <Window content={activeWindows[1]} fullScreen={false} nodes={nodes} setNodes={setNodes} chatMessages={chatMessages} selectedNode={selectedNode} setSelectedNode={setSelectedNode} reasoning_functions={reasoning_functions} reasoning_auto={reasoning_auto}/>
                     </div>
                 )}
             </div>

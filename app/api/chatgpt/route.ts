@@ -10,6 +10,7 @@ export async function POST(request: NextRequest){
   const params = await request.json();
   const messages = params.messages;
   const use_tools = params.use_tools;
+  const auto_mode = params.auto_mode ?? false;
 
   const tools = [
     {
@@ -120,7 +121,100 @@ export async function POST(request: NextRequest){
       }
     }
   ]
-  
+  const operations = [
+    {
+      type: "function",
+      function: {
+        name: "forward",
+        description: "This operation lets the LLM generate an answer without using any tools.",
+        parameters: {
+          type: "object",
+          properties: {
+          },
+          required: [],
+        },
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "tools",
+        description: "This operation lets the LLM generate function calls to a set of related tools.",
+        parameters: {
+          type: "object",
+          properties: {
+          },
+          required: [],
+        },
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "parallelsplit",  //actually "parallel_split", but doesn't then it only generates the first word ("parallel" instead of "parallel_split")
+        description: "This operation lets the LLM generate 3 distinct answers. It is useful for concurrently trying different strategies.",
+        parameters: {
+          type: "object",
+          properties: {
+          },
+          required: [],
+        },
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "aggregate",
+        description: "This operation lets the LLM summarize the results of the different reasoning branches created by the reasoning_split operation.",
+        parameters: {
+          type: "object",
+          properties: {
+          },
+          required: [],
+        },
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "refine",
+        description: "This operation prompts the LLM to reflect about its previous answer and correct it, if it contains mistakes.",
+        parameters: {
+          type: "object",
+          properties: {
+          },
+          required: [],
+        },
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "attention",
+        description: "This operation asks the LLM to reflect, which messages and facts were important so far. It helps to not loose focus in the reasoning process.",
+        parameters: {
+          type: "object",
+          properties: {
+          },
+          required: [],
+        },
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "backward",
+        description: "This operation deletes the previous operation.",
+        parameters: {
+          type: "object",
+          properties: {
+          },
+          required: [],
+        },
+      }
+    },
+  ]
+
   const standardMessages = [{
   role:"system", content:"You are a helpful assistant."
   }]
@@ -130,8 +224,8 @@ export async function POST(request: NextRequest){
   messages: [...standardMessages, ...messages],
   temperature: 1.0,
   max_tokens: 256,
-  tools: tools,
-  tool_choice: use_tools? "auto" : "none",
+  tools: auto_mode? operations : tools,
+  tool_choice: (use_tools || auto_mode)? "auto" : "none",
   })
   return NextResponse.json(response)
 }

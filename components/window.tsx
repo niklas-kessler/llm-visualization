@@ -12,18 +12,19 @@ interface WindowProps {
     setNodes: (nodes: { [id: number]: Node }) => void,
     selectedNode: number,
     setSelectedNode: (id: number) => void,
-    reasoning_functions: ReasoningFunctionsType
+    reasoning_functions: ReasoningFunctionsType,
+    reasoning_auto: () => Promise<void>
 }
 
-export default function Window({content, fullScreen, chatMessages, nodes, setNodes, selectedNode, setSelectedNode, reasoning_functions }: WindowProps) {
+export default function Window({content, fullScreen, chatMessages, nodes, setNodes, selectedNode, setSelectedNode, reasoning_functions, reasoning_auto }: WindowProps) {
     let componentToRender;
     
     switch(content){
         case "Chat":
-            componentToRender = <Chat chatMessages={chatMessages} reasoning_functions={reasoning_functions}/>;
+            componentToRender = <Chat chatMessages={chatMessages} reasoning_functions={reasoning_functions} reasoning_auto={reasoning_auto}/>;
             break;
         case "StandardGraph":
-            componentToRender = <StandardGraph fullScreen={fullScreen} nodes={nodes} selectedNode={selectedNode} setSelectedNode={setSelectedNode} reasoning_functions={reasoning_functions}/>;
+            componentToRender = <StandardGraph fullScreen={fullScreen} nodes={nodes} selectedNode={selectedNode} setSelectedNode={setSelectedNode} reasoning_functions={reasoning_functions} reasoning_auto={reasoning_auto}/>;
             break
         case 'KeywordGraph':
             componentToRender = <KeywordGraph fullScreen={fullScreen} nodes={nodes} setNodes={setNodes}/>;

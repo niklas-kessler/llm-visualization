@@ -15,6 +15,7 @@ const node_text = (type: string) => {
       refine: "\u21BB",
       attention: "?",
       final: "Final",
+      auto: "Auto",
       default: "Default",
     };
 

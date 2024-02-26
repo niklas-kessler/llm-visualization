@@ -7,10 +7,11 @@ import React, { useEffect } from "react";
 
 interface ChatProps {    
     chatMessages: MessageType[],
-    reasoning_functions: ReasoningFunctionsType
+    reasoning_functions: ReasoningFunctionsType,
+    reasoning_auto: () => Promise<void>
 }
 
-export default function Chat({ chatMessages, reasoning_functions }: ChatProps) {
+export default function Chat({ chatMessages, reasoning_functions, reasoning_auto }: ChatProps) {
 
     // Scroll to the bottom of the chat when messages change
     const chatRef = React.createRef<HTMLDivElement>();
@@ -30,7 +31,7 @@ export default function Chat({ chatMessages, reasoning_functions }: ChatProps) {
                     </div>
                 ))}
             </div>
-            <ChatInput reasoning_functions={reasoning_functions}/>
+            <ChatInput reasoning_functions={reasoning_functions} reasoning_auto={reasoning_auto}/>
         </div>
     );
 }

@@ -4,9 +4,10 @@ import ReasoningButtons from "./reasoning-buttons";
 
 interface ChatInputProps { 
     reasoning_functions: ReasoningFunctionsType,
+    reasoning_auto: () => Promise<void>
 }
 
-export default function ChatInput({ reasoning_functions }: ChatInputProps) {
+export default function ChatInput({ reasoning_functions, reasoning_auto }: ChatInputProps) {
 
     const { user } = reasoning_functions
 
@@ -15,7 +16,7 @@ export default function ChatInput({ reasoning_functions }: ChatInputProps) {
 
     return (
         <div className="flex">
-            <ReasoningButtons showButtons={showButtons} setShowButtons={setShowButtons} reasoning_functions={reasoning_functions} horizontal={true}/>
+            <ReasoningButtons showButtons={showButtons} setShowButtons={setShowButtons} reasoning_functions={reasoning_functions} reasoning_auto={reasoning_auto} horizontal={true}/>
             <form className="flex-grow flex p-4" onSubmit={(e) => {
                 e.preventDefault();
                 // fire callback...
