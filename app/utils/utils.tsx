@@ -114,7 +114,9 @@ function mapToOneDimension(matrix: number[][], method: "PCA"|"UMAP" = "PCA"): nu
   if (method === "PCA"){
     var PCA = require('pca-js');
     const vectors = PCA.getEigenVectors(matrix);
-    result = PCA.computeAdjustedData(matrix, vectors[0]).adjustedData[0];
+    //first component is vectors[0]. If vectors[0].eigenvalue is NaN set it to zero array
+    const firstComponent = vectors[0].eigenvalue ? vectors[0] : {eigenvalue: 0, vector: Array(matrix.length).fill(0)};
+    result = PCA.computeAdjustedData(matrix, firstComponent).adjustedData[0];
   } 
   else if (method === "UMAP"){
     const n = matrix.length;
