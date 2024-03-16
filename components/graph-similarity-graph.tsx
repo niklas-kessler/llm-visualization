@@ -48,7 +48,7 @@
        const node = nodesByLevel[key][i];
        const x = (i - (n_nodes - 1) / 2) * width / (n_nodes + 1);
        const numLevels = Object.keys(nodesByLevel).length;
-       const y = parseInt(key) * height / numLevels;
+       const y = parseInt(key) * Math.max(height / numLevels, 70);  // Keep minimum y-distance of 70
        const graphNode = { ...node, x, y } as GraphNode;
        nodesArr.push(graphNode);
      }
