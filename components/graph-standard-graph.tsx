@@ -31,38 +31,66 @@ export default function GraphSG({ fullScreen, nodes, selectedNode, setSelectedNo
     skewY: 0,
   };
 
-  //group nodes by level
-  const nodesByLevel = Object.values(nodes).reduce((groups, node) => {
-    const key = node.level(nodes);
-    if (!groups[key]) {
-        groups[key] = [];
-    }
-    groups[key].push(node);
-    return groups;
-  }, {} as { [key: string]: Node[] });
-
   //map nodes-dict to array of nodes with x and y coordinates
   let nodesArr: GraphNode[] = [];
-  for (const level in nodesByLevel) {
-    const n_nodes = nodesByLevel[level].length;
-    // order by order of parents
-    nodesByLevel[level].sort((a, b) => {
-      if (a.parents === undefined || b.parents === undefined) {
-        return 0;
+
+  //BFS
+  const visited: { [id: number]: boolean } = {};
+  const queue: Node[] = [];
+
+  const startNode = Object.values(nodes).find(node => node.head() === true) as Node;
+  visited[startNode.id] = true;
+  queue.push(startNode);
+
+  while (queue.length > 0) {
+    const currentNode = queue.shift();
+    // Perform operations on currentNode
+    const parents = currentNode?.parents?.map((parentId) => nodesArr.find((node) => node.id === parentId)) ?? [];
+    
+    // y
+    const y = (parents[0]?.y ?? -70) + 70; //parent + 70, head node gets y=0 ("-70+70").
+    
+    // x
+    // head node gets x=0
+    let x = 0;
+    let width = 25;
+    // parent node of type aggregate
+    if (parents.length > 1){
+      x = parents.reduce((sum, parent) => parent ? sum + parent.x : sum, 0) / parents.length; // mean of parents
+      width = parents.reduce((sum, parent) => parent ? sum + parent.width : sum, 0) // sum of parents
+    } 
+    // parent node of type split
+    else if (parents[0]?.type === 'split') {
+      const childamount = parents[0].children?.length as number;
+      width = parents[0].width / childamount; // width of parent is split amongst children
+
+      const ind = parents[0]?.children?.indexOf(currentNode?.id ?? 0) ?? 0; // index in parent's child array
+      const mapped_ind = (ind / (childamount - 1)) * 2 - 1; // mapped to [-1,1]
+      x = parents[0].x + (mapped_ind * parents[0].width)  // in the range of parent.x +/- parent.width/2
+    }
+    // other parent node (forward / refine / ...)
+    else if (parents[0]) {
+      width = parents[0].width;
+      x = parents[0].x;
+    }
+
+    // Save node in NodesArray
+    const graphNode = { ...currentNode, x, width, y } as GraphNode;
+    nodesArr.push(graphNode);
+
+    for (const childId of currentNode?.children ?? []) {
+      const child = Object.values(nodes).find(node => node.id === childId);
+      if (child && !visited[child.id]) {
+        visited[child.id] = true;
+        queue.push(child);
       }
-      const aIndex = nodesByLevel[`${parseInt(level) - 1}`].findIndex((node) => a.parents?.includes(node.id)); // find index of parents of a in upper level
-      const bIndex = nodesByLevel[`${parseInt(level) - 1}`].findIndex((node) => b.parents?.includes(node.id)); // find index of parent of bin upper level
-      return aIndex - bIndex;
-    });    
-    for (let i = 0; i < n_nodes; i++) {
-      const node = nodesByLevel[level][i];
-      const x = (i - (n_nodes - 1) / 2) * width / (n_nodes + 1);
-      const numLevels = Object.keys(nodesByLevel).length;
-      const y = parseInt(level) * Math.max(height / numLevels, 70);  // Keep minimum y-distance of 70
-      const graphNode = { ...node, x, y } as GraphNode;
-      nodesArr.push(graphNode);
     }
   }
+  
+  // Stretch graph in x direction, so that minimum width is 100
+  const minWidth = Math.min(...nodesArr.map(node => node.width));
+  const stretchFactor = 25 / minWidth;
+  nodesArr = nodesArr.map(node => ({ ...node, x: node.x * stretchFactor, width: node.width * stretchFactor }));
 
   //map parents and children ids to their id in the new nodes array
   for (const value of nodesArr) {

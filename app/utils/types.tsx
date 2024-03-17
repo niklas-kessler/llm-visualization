@@ -40,6 +40,7 @@ export interface GraphNode {
     id: number;
     type: "user" | "forward" | "tools" | "split" | "aggregate" | "refine" | "attention" | "final";
     x: number;
+    width: number;
     y: number;
     messages: MessageType[];
     keywords?: string[];
