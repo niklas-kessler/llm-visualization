@@ -43,13 +43,22 @@ export default function GraphSG({ fullScreen, nodes, selectedNode, setSelectedNo
 
   //map nodes-dict to array of nodes with x and y coordinates
   let nodesArr: GraphNode[] = [];
-  for (const key in nodesByLevel) {
-    const n_nodes = nodesByLevel[key].length;
+  for (const level in nodesByLevel) {
+    const n_nodes = nodesByLevel[level].length;
+    // order by order of parents
+    nodesByLevel[level].sort((a, b) => {
+      if (a.parents === undefined || b.parents === undefined) {
+        return 0;
+      }
+      const aIndex = nodesByLevel[`${parseInt(level) - 1}`].findIndex((node) => a.parents?.includes(node.id)); // find index of parents of a in upper level
+      const bIndex = nodesByLevel[`${parseInt(level) - 1}`].findIndex((node) => b.parents?.includes(node.id)); // find index of parent of bin upper level
+      return aIndex - bIndex;
+    });    
     for (let i = 0; i < n_nodes; i++) {
-      const node = nodesByLevel[key][i];
+      const node = nodesByLevel[level][i];
       const x = (i - (n_nodes - 1) / 2) * width / (n_nodes + 1);
       const numLevels = Object.keys(nodesByLevel).length;
-      const y = parseInt(key) * Math.max(height / numLevels, 70);  // Keep minimum y-distance of 70
+      const y = parseInt(level) * Math.max(height / numLevels, 70);  // Keep minimum y-distance of 70
       const graphNode = { ...node, x, y } as GraphNode;
       nodesArr.push(graphNode);
     }
