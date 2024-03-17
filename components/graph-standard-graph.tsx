@@ -38,9 +38,11 @@ export default function GraphSG({ fullScreen, nodes, selectedNode, setSelectedNo
   const visited: { [id: number]: boolean } = {};
   const queue: Node[] = [];
 
-  const startNode = Object.values(nodes).find(node => node.head() === true) as Node;
-  visited[startNode.id] = true;
-  queue.push(startNode);
+  const startNode = Object.values(nodes).find(node => node.head() === true);
+  if(startNode){
+    visited[startNode.id] = true;
+    queue.push(startNode);
+  }
 
   while (queue.length > 0) {
     const currentNode = queue.shift();
