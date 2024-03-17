@@ -612,11 +612,11 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         });
         const result = await response.json();
         const res_mess = result.choices[0].message;
-        let operation = res_mess.tool_calls[0].function.name ?? "forward";    //default to forward operation
-        if (operation === "parallelsplit") operation = "parallel_split";    //rename operation to match reasoning functions, see also app/api/chatgpt/route.ts
+        let operation: keyof ReasoningFunctionsType = res_mess.tool_calls[0].function.name ?? "forward";
 
         if(reasoning_functions[operation]){
-            await reasoning_functions[operation]();
+            let func = reasoning_functions[operation] as (() => void); // User operation is of different type, but LLM won't choose it / doesn't know about it anyway
+            func();
         }
         return;
     }
@@ -627,7 +627,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         tools: reasoning_tools,
         backward: reasoning_backward,
         refine: reasoning_refine,
-        parallel_split: reasoning_parallel_split,
+        parallelsplit: reasoning_parallel_split,
         aggregate: reasoning_aggregate,
         attention: reasoning_attention    
     }

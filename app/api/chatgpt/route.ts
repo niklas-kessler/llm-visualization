@@ -151,7 +151,7 @@ export async function POST(request: NextRequest){
     {
       type: "function",
       function: {
-        name: "parallelsplit",  //actually "parallel_split", but doesn't then it only generates the first word ("parallel" instead of "parallel_split")
+        name: "split",  //actually "parallel_split", but doesn't then it only generates the first word ("parallel" instead of "parallel_split")
         description: "This operation lets the LLM generate 3 distinct answers. It is useful for concurrently trying different strategies.",
         parameters: {
           type: "object",

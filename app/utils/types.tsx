@@ -14,7 +14,7 @@ export interface ReasoningFunctionsType {
     tools: () => void,
     backward: () => void,
     refine: () => void,
-    parallel_split: () => void,
+    parallelsplit: () => void,
     aggregate: () => void,
     attention: () => void,
 }
