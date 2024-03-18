@@ -185,7 +185,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     async function reasoning_forward() {
         // only allowed if selected node is a leaf or no node is selected
         if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
-
+        console.log("asdjfkl")
         const response = await fetch("/api/chatgpt", {
             method:"POST",
             headers:{
@@ -371,74 +371,56 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     async function reasoning_parallel_split() {        
         if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
 
-        const response1 = await fetch("/api/chatgpt", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                messages: [...chatMessages],
-                temperature: 0.9,
-            }),
-        });
-        const response2 = await fetch("/api/chatgpt", {
-            method:"POST",
-            headers:{
-            "Content-Type": "application/json",
-            },
-            body:JSON.stringify({
-                messages: [...chatMessages],
-                temperature: 0.9,
-            })
-        });
-        const response3 = await fetch("/api/chatgpt", {
-            method:"POST",
-            headers:{
-            "Content-Type": "application/json",
-            },
-            body:JSON.stringify({
-                messages: [...chatMessages],
-                temperature: 0.9,
-            })
-        });
-        const result1 = await response1.json();
-        const result2 = await response2.json();
-        const result3 = await response3.json();
-        const assistant_message1: MessageType = {role: result1.choices[0].message.role, content: result1.choices[0].message.content}
-        const assistant_message2: MessageType = {role: result2.choices[0].message.role, content: result2.choices[0].message.content}
-        const assistant_message3: MessageType = {role: result3.choices[0].message.role, content: result3.choices[0].message.content}
-
-        const node_split: Node = new Node({type:"split", messages:[], parents: ([selectedNode]), children:[]})
+        // any amount valid
+        const approaches: string[] = [
+            "do whatever you think is best",
+            "do whatever you think is best",
+            "Take a philosophical point of view, do we really want to solve this problem? What are the consequences of solving it? What are the consequences of not solving it?",
+            "Dont do it, let someone else do it"
+        ]
+        
+        const splitnode: Node = new Node({type:"split", messages:[], parents: ([selectedNode]), children:[]})
         if(selectedNode !== -1){
-            node_split.parents = [selectedNode];
-            nodes[selectedNode].children?.push(node_split.id);
+            splitnode.parents = [selectedNode];
+            nodes[selectedNode].children?.push(splitnode.id);
         }
-        const node1: Node = new Node({type:"forward", messages:[assistant_message1], parents: ([node_split.id]), children:[]})
-        const node2: Node = new Node({type:"forward", messages:[assistant_message2], parents: ([node_split.id]), children:[]})
-        const node3: Node = new Node({type:"forward", messages:[assistant_message3], parents: ([node_split.id]), children:[]})
-        node_split.children = [node1.id, node2.id, node3.id];
+
+        const branchnodes: Node[] = [];
+        for (const approach of approaches) {
+            const approach_message: MessageType = {role: "system", content: "Using the following approach: " + approach}
+            const response = await fetch("/api/chatgpt", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    messages: [...chatMessages, approach_message],
+                    temperature: 0.9,
+                }),
+            });
+
+            const result = await response.json();
+            const assistant_message: MessageType = { role: result.choices[0].message.role, content: result.choices[0].message.content };
+
+            const node: Node = new Node({ type: "forward", messages: [approach_message, assistant_message], parents: [splitnode.id], children: []});
+            // Add the new node to the splitnodes's children array
+            splitnode.children?.push(node.id);
+            branchnodes.push(node)
+        }
         
         //extract keywords and calculate textembedding
-        const relevant_messages_1 = node1.messages.map(m => m.content);
-        const relevant_messages_2 = node2.messages.map(m => m.content);
-        const relevant_messages_3 = node3.messages.map(m => m.content);
+        const relevant_messages: string[][] = branchnodes.map(node => node.messages.map(m => m.content))
         Promise.all([
-            extract_keywords({"inputs": relevant_messages_1}),
-            extract_keywords({"inputs": relevant_messages_2}),
-            extract_keywords({"inputs": relevant_messages_3}),
-            text_embedding(relevant_messages_1),
-            text_embedding(relevant_messages_2),
-            text_embedding(relevant_messages_3),
+            Promise.all(relevant_messages.map(messages => extract_keywords({"inputs": messages}))),
+            Promise.all(relevant_messages.map(messages => text_embedding(messages))),
             text_embedding([])
-        ]).then(([keywords1, keywords2, keywords3, textembedding1, textembedding2, textembedding3, textembedding_split]) => {
-            node1.keywords = keywords1;
-            node2.keywords = keywords2;
-            node3.keywords = keywords3;
-            node1.textembedding = textembedding1;
-            node2.textembedding = textembedding2;
-            node3.textembedding = textembedding3;
-            node_split.textembedding = textembedding_split;
-            appendNodes([node_split, node1, node2, node3]);
+        ]).then(([keywords, textembeddings, textembedding_split]) => {
+            for (let i = 0; i < relevant_messages.length; i++) {
+                branchnodes[i].keywords = keywords[i];
+                branchnodes[i].textembedding = textembeddings[i];
+            }
+            splitnode.textembedding = textembedding_split;
+            appendNodes([splitnode, ...branchnodes]);
         });
     }
      
@@ -616,7 +598,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
         if(reasoning_functions[operation]){
             let func = reasoning_functions[operation] as (() => void); // User operation is of different type, but LLM won't choose it / doesn't know about it anyway
-            func();
+            await func();
         }
         return;
     }
