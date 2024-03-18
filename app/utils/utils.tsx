@@ -2,6 +2,9 @@ import { scaleLinear } from '@visx/scale';
 import { UMAP } from 'umap-js';
 import * as difflib from 'difflib';
 import { Node } from './types';
+import { createColorMap, linearScale } from '@colormap/core';
+import { viridis, cividis, plasma, inferno, magma, blackWhite } from "@colormap/presets";
+
 
 // returns the text representation of a node type
 const node_text = (type: string) => {
@@ -22,13 +25,21 @@ const node_text = (type: string) => {
     return textMap[type] || textMap.default;
 };
 
-// returns the color of a node in the similarity graph, based on its similarity value and the current linear color space
-const similarity_node_color = (similarity: number, color1: string, color2: string) => {
-  const color = scaleLinear({
-    domain: [0, 1],
-    range: [color1, color2],
-  });
-  return color(similarity);  
+const colorMapDict = {
+  viridis: viridis,
+  cividis: cividis,
+  plasma: plasma,
+  inferno: inferno,
+  magma: magma,
+  blackWhite: blackWhite
+};
+
+// returns the color of a node in the similarity graph, based on its 2d-similarity-value and the current 2d color space
+const similarity_node_color = (similarity: number, colorMapName: keyof typeof colorMapDict) => {
+  const dummy_scale = linearScale([0, 1], [0, 1]);  
+  const colorMap = createColorMap(colorMapDict[colorMapName], dummy_scale);
+  let color = colorMap(similarity).map((c) => c * 255);
+  return `rgb(${color.join(",")})`;
 }
 
 // returns the color of a node in the standard graph, based on its type and whether it is selected

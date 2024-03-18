@@ -14,9 +14,7 @@ export default function SimilarityGraph( { fullScreen, nodes }: SimilarityGraphP
     const [settings, setSettings] = useState<SimilaritySettings>({
         measurement: "keywordoverlap",
         reduction_method: "PCA",
-        color1: '#e9a039',
-        color2: "#118ab2"
-        
+        colorMap: "viridis",    
     });
 
     const measurementFunctions: any = {
@@ -29,7 +27,7 @@ export default function SimilarityGraph( { fullScreen, nodes }: SimilarityGraphP
 
     return (
         <div className="relative w-full h-full">
-            <GraphSimGraph fullScreen={fullScreen} nodes={sim_nodes} color1={settings.color1} color2={settings.color2}/>
+            <GraphSimGraph fullScreen={fullScreen} nodes={sim_nodes} colorMap={settings.colorMap}/>
             <div className="absolute top-4 left-4 w-32 min-h-6 h-fit max-h-52 bg-gray-300 border-black border-4">
                 <select className="w-24 m-3 bg-gray-100" value={settings.measurement} onChange={(e) => setSettings({ ...settings, measurement: e.target.value as "seqmatch" | "keywordoverlap" | "textembedding" })}>
                     {Object.keys(measurementFunctions).map((measurement) => (
@@ -40,24 +38,15 @@ export default function SimilarityGraph( { fullScreen, nodes }: SimilarityGraphP
                     <option key={"PCA"} value={"PCA"}>PCA</option>
                     <option key={"UMAP"} value={"UMAP"}>UMAP</option>
                 </select>
-                <div className="flex justify-center">
-                    <input 
-                        type="color" 
-                        className="h-6 w-6 m-3" 
-                        value={settings.color1}
-                        onChange={(e) => {
-                            setSettings({ ...settings, color1: e.target.value})
-                        }}
-                    />
-                    <input 
-                        type="color" 
-                        className="h-6 w-6 m-3" 
-                        value={settings.color2}
-                        onChange={(e) => {
-                            setSettings({ ...settings, color2: e.target.value})
-                        }}
-                    />
-                </div>
+                <select className="w-24 m-3 bg-gray-100" value={settings.colorMap} onChange={(e) => setSettings({ ...settings, colorMap: e.target.value as SimilaritySettings["colorMap"]})}>
+                    <option key={"viridis"} value={"viridis"}>viridis</option>
+                    <option key={"cividis"} value={"cividis"}>cividis</option>
+                    <option key={"plasma"} value={"plasma"}>plasma</option>
+                    <option key={"inferno"} value={"inferno"}>inferno</option>
+                    <option key={"magma"} value={"magma"}>magma</option>
+                    <option key={"blackWhite"} value={"blackWhite"}>blackWhite</option>
+                </select>
+                <img className="m-3 mt-0 w-24 h-4" src={settings.colorMap + ".png"} alt="Viridis.png"/>
             </div>
         </div>
     );

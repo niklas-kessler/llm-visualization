@@ -21,6 +21,8 @@
     "react-dom": "^18"
   },
   "devDependencies": {
+    "@colormap/core": "^0.2.0",
+    "@colormap/presets": "^0.2.0",
     "@types/d3-scale-chromatic": "^3.0.3",
     "@types/difflib": "^0.2.7",
     "@types/node": "^20",

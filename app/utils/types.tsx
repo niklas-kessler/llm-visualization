@@ -72,6 +72,5 @@ export interface KeywordSettings {
 export interface SimilaritySettings {
     measurement: "seqmatch" | "keywordoverlap" | "textembedding";
     reduction_method: "PCA" | "UMAP";
-    color1: string;
-    color2: string;
+    colorMap: "viridis" | "cividis" | "plasma" | "inferno" | "magma" | "blackWhite";
 }
