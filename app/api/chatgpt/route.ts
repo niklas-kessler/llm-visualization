@@ -16,107 +16,17 @@ export async function POST(request: NextRequest){
     {
       type: "function",
       function: {
-        name: "get_cpu_usage",
-        description: "Get the current overall CPU usage in percentage.",
+        name: "wikipedia_query_run",
+        description: "Look things up in wikipedia.",
         parameters: {
           type: "object",
           properties: {
-          },
-          required: [],
-        },
-      }
-    },
-    {
-      type: "function",
-      function: {
-        name: "get_thread_cpu_usage",
-        description: "Get the CPU usage of a specific thread in percentage.",
-        parameters: {
-          type: "object",
-          properties: {
-            thread_id: {
+            query: {
               type: "string",
-              description: "The id of the thread to get the CPU usage for.",
+              description: "The topic to search for and read about.",
             },
           },
-          required: ["thread_id"],
-        },
-      }
-    },
-    {
-      type: "function",
-      function: {
-        name: "get_threads",
-        description: "Get all currently running threads. Returns a list of the threads with their respective ids.",
-        parameters: {
-          type: "object",
-          properties: {
-          },
-          required: [],
-        },
-      }
-    },
-    {
-      type: "function",
-      function: {
-        name: "get_disk_space",
-        description: "Get the available disk space of the system. Returns the amount of free disk space.",
-        parameters: {
-          type: "object",
-          properties: {
-          },
-          required: [],
-        },
-      }
-    },
-    {
-      type: "function",
-      function: {
-        name: "get_network_latency",
-        description: "Get the current network latency in either seconds or milliseconds.",
-        parameters: {
-          type: "object",
-          properties: {
-            unit: {
-              type: "string",
-              description: "Either 'seconds' or 'milliseconds'.",
-            },
-          },
-          required: ["unit"],
-        },
-      }
-    },
-    {
-      type: "function",
-      function: {
-        name: "get_service_status",
-        description: "Get the status of a specific service. Returns either 'running' or 'stopped'.",
-        parameters: {
-          type: "object",
-          properties: {
-            service_id: {
-              type: "string",
-              description: "The id of the service to get the status for.",
-            },
-          },
-          required: ["service_id"],
-        },
-      }
-    },
-    {
-      type: "function",
-      function: {
-        name: "get_service_id",
-        description: "Find a service by its name and return the id.",
-        parameters: {
-          type: "object",
-          properties: {
-            service: {
-              type: "string",
-              description: "The name of the service to get the id for.",
-            },
-          },
-          required: ["service"],
+          required: ["query"],
         },
       }
     }

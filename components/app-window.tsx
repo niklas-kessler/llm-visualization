@@ -185,7 +185,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     async function reasoning_forward() {
         // only allowed if selected node is a leaf or no node is selected
         if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
-        console.log("asdjfkl")
         const response = await fetch("/api/chatgpt", {
             method:"POST",
             headers:{
@@ -242,8 +241,9 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         let tool_results_string = "";
 
         // iterate over tool calls and get results
-        // currently all tool calls are passed to the simulate_tool function, this could be replaced by a dynamic call to the respective tool
         for (let tool_call of res_mess.tool_calls) {
+            /*
+            // pass tool calls to the simulate_tool function, long-term this will be replaced by a dynamic call to the respective tool
             const tool_answer = await fetch("/api/simulate_tool", {
                 method: "POST",
                 headers:{
@@ -252,6 +252,15 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
                 body:JSON.stringify({
                     tool: tool_call.function.name,
                     tool_args: tool_call.function.arguments
+                })
+            });*/
+            const tool_answer = await fetch("/api/langchain/" + tool_call.function.name, {
+                method: "POST",
+                headers:{
+                    "Content-Type": "application/json",
+                    },
+                body:JSON.stringify({
+                    args: tool_call.function.arguments
                 })
             });
             tool_result = (await tool_answer.json()).result;
@@ -373,10 +382,9 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
         // any amount valid
         const approaches: string[] = [
-            "do whatever you think is best",
-            "do whatever you think is best",
-            "Take a philosophical point of view, do we really want to solve this problem? What are the consequences of solving it? What are the consequences of not solving it?",
-            "Dont do it, let someone else do it"
+            "Without the help of any tools, try to solve the problem on your own. REMEMBER, DO NOT USE ANY TOOL! Do it with your knowledge only.",
+            "Try using the best fitting tool to solve the problem.",
+            "Avoid the most obvious action and try something different. E.g. only gather background information and try to conclude what happened. Or use a tool thats not obvious at the first glance but could provide additional helpful information."
         ]
         
         const splitnode: Node = new Node({type:"split", messages:[], parents: ([selectedNode]), children:[]})
