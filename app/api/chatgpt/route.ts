@@ -29,6 +29,23 @@ export async function POST(request: NextRequest){
           required: ["query"],
         },
       }
+    },
+    {
+      type: "function",
+      function: {
+        name: "wolfram_alpha",
+        description: "A wrapper around Wolfram Alpha. Useful for when you need to answer questions about Math, Science, Technology, Culture, Society and Everyday Life. Input should be a search query.",
+        parameters: {
+          type: "object",
+          properties: {
+            input: {
+              type: "string",
+              description: "The question you need to have answered.",
+            },
+          },
+          required: ["input"],
+        },
+      }
     }
   ]
   const operations = [
