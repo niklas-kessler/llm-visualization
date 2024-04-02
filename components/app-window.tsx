@@ -4,6 +4,7 @@ import Window from "./window";
 import History from "./history";
 import { MessageType, ReasoningFunctionsType } from "@/app/utils/types";
 import { extract_keywords, text_embedding } from "@/app/utils/utils";
+import { langchain_tools, simulated_tools, operations } from "@/app/utils/tools";
 
 interface AppWindowProps {
     showHistory: boolean;
@@ -254,15 +255,25 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
                     tool_args: tool_call.function.arguments
                 })
             });*/
-            const tool_answer = await fetch("/api/langchain/" + tool_call.function.name, {
+            let tool_path = "";
+            let body = {};
+
+            if (langchain_tools.map(obj => obj.function.name).includes(tool_call.function.name)) {
+                tool_path = "/api/langchain/" + tool_call.function.name;
+                body = { args: tool_call.function.arguments };
+            } else {
+                tool_path = "/api/simulate_tool";
+                body = { tool: tool_call.function.name, tool_args: tool_call.function.arguments };
+            }
+
+            const tool_answer = await fetch(tool_path, {
                 method: "POST",
                 headers:{
                     "Content-Type": "application/json",
                     },
-                body:JSON.stringify({
-                    args: tool_call.function.arguments
-                })
+                body:JSON.stringify(body)
             });
+
             tool_result = (await tool_answer.json()).result;
             tool_results_string += "Tool " + tool_call.function.name + " with arguments " + tool_call.function.arguments + " gave result: " + tool_result + ".";    
         }
