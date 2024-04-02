@@ -36,8 +36,8 @@ const langchain_tools: any[] = [
     {
         type: "function",
         function: {
-          name: "duckduckgo",
-          description: "Get search results from the DuckDuckGo search-engine. Useful for when you need to answer questions about general knowledge. Input should be a search query.",
+          name: "brave_search",
+          description: "Get search results from the BraveSearch search-engine. useful for when you need to answer questions about current events. Input should be a search query.",
           parameters: {
             type: "object",
             properties: {
