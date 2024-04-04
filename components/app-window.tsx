@@ -620,7 +620,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const result = await response.json();
         const res_mess = result.choices[0].message;
         let operation: keyof ReasoningFunctionsType = res_mess.tool_calls[0].function.name ?? "forward";
-
+        console.log("auto chose operation: ", operation);
         if(reasoning_functions[operation]){
             let func = reasoning_functions[operation] as (() => void); // User operation is of different type, but LLM won't choose it / doesn't know about it anyway
             await func();

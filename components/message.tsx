@@ -20,7 +20,9 @@ export default function Message({role, content}: {role:string, content:string}) 
                 <div className="p-2"> {roleDict[role]} </div>
             </div>
             <div className="bg-slate-300 w-full rounded">
-                <div className="p-2">{content}</div>
+                <div className="p-2">{content.split('\n').map((line, index) => (
+                    <div key={index}>{line}</div>
+                ))}</div>
             </div>
         </div>
     );
