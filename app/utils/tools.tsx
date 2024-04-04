@@ -51,6 +51,25 @@ const langchain_tools: any[] = [
         }
       },
 ]
+const computed_tools: any[] = [
+  {
+      type: "function",
+      function: {
+      name: "website_crawler",
+      description: "Get the content of a website in text form.",
+      parameters: {
+          type: "object",
+          properties: {
+          url: {
+              type: "string",
+              description: "The url of the website you want to get the content of.",
+          },
+          },
+          required: ["url"],
+      },
+      }
+  } 
+  ]
 const simulated_tools: any[] = [
 {
     type: "function",
@@ -114,7 +133,7 @@ const operations = [
     type: "function",
     function: {
     name: "aggregate",
-    description: "This operation lets the LLM summarize the results of the different reasoning branches created by the reasoning_split operation.",
+    description: "This operation lets the LLM summarize the results of the different reasoning branches created by the reasoning_split operation. Can only be called if there was a reasoning_split operation before, that hasn't been aggregated yet.",
     parameters: {
         type: "object",
         properties: {
@@ -164,4 +183,4 @@ const operations = [
 },
 ]
 
-export { langchain_tools, simulated_tools, operations}
+export { langchain_tools, computed_tools, simulated_tools, operations}
