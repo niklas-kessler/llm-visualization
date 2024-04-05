@@ -41,7 +41,7 @@ export default function ChatInput({ reasoning_functions, reasoning_auto }: ChatI
                 user(textInput);
                 setTextInput('');
             }}>
-            <textarea placeholder="Send a message..." value={textInput} onChange={(e) => setTextInput(e.target.value)} onKeyDown={handleKeyDown} className="flex-1 px-4 py-2 border rounded-l-md border-zinc-700 focus:outline-none"></textarea>
+            <textarea placeholder="Send a message..." value={textInput} onChange={(e) => setTextInput(e.target.value)} onKeyDown={handleKeyDown} className="flex-1 px-4 py-2 min-h-12 max-h-12 border rounded-l-md border-zinc-700 focus:outline-none"></textarea>
             <input type="submit" className="px-4 py-2 bg-zinc-400 border-2 border-zinc-700 rounded-r-md" />
             </form>
         </div>

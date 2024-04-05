@@ -618,6 +618,12 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             })
         });
         const result = await response.json();
+        
+        if(result.error) {
+            console.log("Error: Could not generate a valid response.");
+            return;
+        }
+
         const res_mess = result.choices[0].message;
         let operation: keyof ReasoningFunctionsType = res_mess.tool_calls[0].function.name ?? "forward";
         console.log("auto chose operation: ", operation);

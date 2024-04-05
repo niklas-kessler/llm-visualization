@@ -16,14 +16,45 @@ export async function POST(request: NextRequest){
   const standardMessages = [{
   role:"system", content:"You are a helpful assistant."
   }]
+  const errorMessage = [{role:"system", content:"You just generated a hallucinated tool call. Only existing tools can be used. Try again."}]
+  const all_tools = langchain_tools.concat(simulated_tools).concat(computed_tools)
 
-  const response = await openai.chat.completions.create({
-  model: "gpt-3.5-turbo-1106",
-  messages: [...standardMessages, ...messages],
-  temperature: 1.0,
-  max_tokens: 256,
-  tools: auto_mode? operations : (langchain_tools.concat(simulated_tools).concat(computed_tools)),
-  tool_choice: (use_tools || auto_mode)? "auto" : "none",
-  })
+  let response: any = {};
+  let hallucinated_error = false;
+  let tries = 0;
+
+  // Try to generate a valid response without calls to hallucinated tools (max 3 tries)
+  do {
+    tries++;
+    if(tries > 3){
+      return NextResponse.json({error: "Could not generate a valid response."})
+    }
+    console.log("ChatGPT Attempt number: ", tries);
+
+    //generate response / tool calls
+    response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo-1106",
+      messages: [...standardMessages, ...messages, ...(hallucinated_error? errorMessage : [])],
+      temperature: 1.0,
+      max_tokens: 256,
+      tools: auto_mode? operations : all_tools,
+      tool_choice: (use_tools || auto_mode)? "auto" : "none",
+    })    
+
+    // Check if the generated response contains a tool call that is not in the list of existing tools    
+    hallucinated_error = false;
+
+    for (const tool_call of response.choices[0].message.tool_calls ?? []){
+
+      if (use_tools && !all_tools.map(obj => obj.function.name).includes(tool_call.function.name) ||
+          auto_mode && !operations.map(obj => obj.function.name).includes(tool_call.function.name)){
+      
+            hallucinated_error = true;
+            console.log("Error: hallucinated the tool", tool_call.function.name);  
+      
+          } 
+    }
+  } while (hallucinated_error);
+  
   return NextResponse.json(response)
 }
