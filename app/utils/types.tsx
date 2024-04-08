@@ -17,6 +17,7 @@ export interface ReasoningFunctionsType {
     parallelsplit: () => void,
     aggregate: () => void,
     attention: () => void,
+    final: () => void,
 }
 
 export interface Node {

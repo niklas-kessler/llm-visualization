@@ -9,9 +9,10 @@ interface StandardGraphProps {
     selectedNode: number,
     setSelectedNode: (id: number) => void,
     reasoning_functions: ReasoningFunctionsType,
+    reasoning_auto: () => Promise<void>
 }
 
-export default function StandardGraph( { fullScreen, nodes, selectedNode, setSelectedNode, reasoning_functions }: StandardGraphProps) {
+export default function StandardGraph( { fullScreen, nodes, selectedNode, setSelectedNode, reasoning_functions, reasoning_auto }: StandardGraphProps) {
     
     const [showButtons, setShowButtons] = useState<boolean>(true);
 
@@ -19,7 +20,7 @@ export default function StandardGraph( { fullScreen, nodes, selectedNode, setSel
         <div className="relative w-full h-full">
             <GraphStandardGraph fullScreen={fullScreen} nodes={nodes} selectedNode={selectedNode} setSelectedNode={setSelectedNode}/>
             <div className="absolute top-4 left-4">
-                <ReasoningButtons showButtons={showButtons} setShowButtons={setShowButtons} reasoning_functions={reasoning_functions} horizontal={false}/>
+                <ReasoningButtons showButtons={showButtons} setShowButtons={setShowButtons} reasoning_functions={reasoning_functions} reasoning_auto={reasoning_auto} horizontal={false}/>
             </div>
         </div>
     );

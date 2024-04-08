@@ -598,6 +598,45 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         });
     }
 
+    // final answer operation
+    async function reasoning_final_answer() {
+        if (selectedNode === -1) return;
+        if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
+
+        const final_answer_prompt="Based on what you found out, provide a precise and clear answer to the question. If you haven't found a solution yet, try to summarize the most important findings so far. Make sure that your final answer is founded on the reasoning steps you have taken so far."
+        const system_message: MessageType = {role: "system", content: final_answer_prompt}
+
+        // get response
+        const response = await fetch("/api/chatgpt", {
+            method:"POST",
+            headers:{
+            "Content-Type": "application/json",
+            },
+            body:JSON.stringify({
+            messages: [...chatMessages]
+            })
+        });
+        const result = await response.json();
+        const assistant_message: MessageType = {role: result.choices[0].message.role, content: result.choices[0].message.content}
+        
+        const node: Node = new Node({type: "final", messages:[system_message, assistant_message], parents:([selectedNode]), children:[]})
+        if(selectedNode !== -1){
+            node.parents = [selectedNode];
+            nodes[selectedNode].children?.push(node.id);
+        }
+        
+        // extract keywords and calculate textembedding
+        const relevant_messages = [node.messages[1].content];
+        Promise.all([
+            extract_keywords({"inputs": relevant_messages}),
+            text_embedding(relevant_messages)
+        ]).then(([keywords, textembedding]) => {
+            node.keywords = keywords;
+            node.textembedding = textembedding;
+            appendNodes([node]);
+        });
+    }
+
     // operation for automatically choosing an operation
     async function reasoning_auto() {
         if (selectedNode === -1) return;
@@ -642,7 +681,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         refine: reasoning_refine,
         parallelsplit: reasoning_parallel_split,
         aggregate: reasoning_aggregate,
-        attention: reasoning_attention    
+        attention: reasoning_attention,
+        final: reasoning_final_answer
     }
 
     return(

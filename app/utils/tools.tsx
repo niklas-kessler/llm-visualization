@@ -181,6 +181,19 @@ const operations = [
     },
     }
 },
+{
+  type: "function",
+  function: {
+  name: "final",
+  description: "Call this operation to finalize the reasoning process, or when you think you are stuck and have no chance of solving the task. The LLM will generate a final answer based on the results of the reasoning process, or at least summarize its findings.",
+  parameters: {
+      type: "object",
+      properties: {
+      },
+      required: [],
+  },
+  }
+},
 ]
 
 export { langchain_tools, computed_tools, simulated_tools, operations}
