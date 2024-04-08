@@ -73,6 +73,12 @@ const node_color = (type: string, selected: boolean) => {
 // prompt the LLM to extract keywords from a list of messages
 async function extract_keywords(data: {inputs: string[]}) {
   console.log("Extracting Keywords");
+
+  const SKIP_KEYWORD_EXTRACTION = true; // experimental feature, set to true to skip keyword extraction
+  if (SKIP_KEYWORD_EXTRACTION) {
+    return [];
+  }
+
   let input = data.inputs.join(" \n");
   let keywords: string[] = [];
 
@@ -204,6 +210,11 @@ async function text_embedding(inputs: string[]){
   //For long inputs, mainly tool results (website content/...):
   //Approach 1 Cut: Only consider the first 8192 characters of the input (limit of the model), then get text_embedding
   //TODO: Approach 2: Summarize before calculating the text_embedding, e.g. with https://huggingface.co/facebook/bart-large-cnn
+  const SKIP_TEXT_EMBEDDING = true; // experimental feature, set to true to skip text embedding
+  if (SKIP_TEXT_EMBEDDING) {
+    return Array(256).fill(0);
+  }
+  
   const str = inputs.join(" ").slice(0, 8192);
   if(str === "") return Array(256).fill(0);
   const response = await fetch("/api/get_text_embedding", {
