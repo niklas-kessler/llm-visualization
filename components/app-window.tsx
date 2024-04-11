@@ -222,7 +222,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         // only allowed if selected node is a leaf or no node is selected
         if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
 
-        const system_message_before = {role:'system', content:'Make tool-calls to check and improve your answer'}
+        const system_message_before = {role:'user', content:'Call tools to help you with the reasoning process.'}
 
         const response = await fetch("/api/chatgpt", {
             method:"POST",
@@ -360,7 +360,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
         // system prompt
         const refine_prompt="Reflect and overthink your previous answer. Is there anything incorrect?"
-        const system_message: MessageType = {role: "system", content: refine_prompt}
+        const system_message: MessageType = {role: "user", content: refine_prompt}
 
         // get response
         const response = await fetch("/api/chatgpt", {
@@ -565,7 +565,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
 
         const refine_prompt="Reflect about the reasoning steps you have taken. Which were the most important and what have you been able to conclude so far? How can you go on from here to find a solution."
-        const system_message: MessageType = {role: "system", content: refine_prompt}
+        const system_message: MessageType = {role: "user", content: refine_prompt}
 
         // get response
         const response = await fetch("/api/chatgpt", {
@@ -604,7 +604,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
 
         const final_answer_prompt="Based on what you found out, provide a precise and clear answer to the question. If you haven't found a solution yet, try to summarize the most important findings so far. Make sure that your final answer is founded on the reasoning steps you have taken so far."
-        const system_message: MessageType = {role: "system", content: final_answer_prompt}
+        const system_message: MessageType = {role: "user", content: final_answer_prompt}
 
         // get response
         const response = await fetch("/api/chatgpt", {
@@ -645,6 +645,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const choose_operation_prompt = "To enhance your reasoning process, we have integrated you into a larger system, where the user can input its request and then you will find the solution step by step. Each step is called an operation and there are different operations available. Choose, which operation would be the most helpful to continue the reasoning process."
         const system_message: MessageType = {role: "system", content: choose_operation_prompt}
         
+        console.log("chatMessages: ", chatMessages);
+
         // get response
         const response = await fetch("/api/chatgpt", {
             method:"POST",

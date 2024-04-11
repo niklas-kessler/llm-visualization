@@ -37,13 +37,13 @@ const langchain_tools: any[] = [
         type: "function",
         function: {
           name: "brave_search",
-          description: "Get search results from the BraveSearch search-engine. useful for when you need to answer questions about current events. Input should be a search query.",
+          description: "Get search results from the BraveSearch search-engine. Only returns headers and snippets. Useful for finding relevant websites that contain helpful information.",
           parameters: {
             type: "object",
             properties: {
               input: {
                 type: "string",
-                description: "The question you need to have answered.",
+                description: "The search query you want to use.",
               },
             },
             required: ["input"],
@@ -56,7 +56,7 @@ const computed_tools: any[] = [
       type: "function",
       function: {
       name: "website_crawler",
-      description: "Get the content of a website in text form.",
+      description: "Get the content of a website in text form. Useful for extracting further information from websites, when e.g. the snippet from a search engine is not enough.",
       parameters: {
           type: "object",
           properties: {
@@ -120,7 +120,7 @@ const operations = [
     type: "function",
     function: {
     name: "split",  //actually "parallel_split", but doesn't then it only generates the first word ("parallel" instead of "parallel_split")
-    description: "This operation lets the LLM generate 3 distinct answers. It is useful for concurrently trying different strategies.",
+    description: "This operation lets the LLM generate 3 distinct answers. It is useful for concurrently trying different strategies, and later aggregating their results.",
     parameters: {
         type: "object",
         properties: {
@@ -133,7 +133,7 @@ const operations = [
     type: "function",
     function: {
     name: "aggregate",
-    description: "This operation lets the LLM summarize the results of the different reasoning branches created by the reasoning_split operation. Can only be called if there was a reasoning_split operation before, that hasn't been aggregated yet.",
+    description: "This operation lets the LLM summarize the results of the different reasoning branches created by the split operation. Can only be called if there was a split operation before, that hasn't been aggregated yet. Do not call this operation if you haven't called split before.",
     parameters: {
         type: "object",
         properties: {
