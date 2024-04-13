@@ -262,14 +262,16 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             let body = {};
 
             if (langchain_tools.map(obj => obj.function.name).includes(tool_call.function.name)) {
-                tool_path = "/api/langchain/" + tool_call.function.name;
-                body = { args: tool_call.function.arguments };
-            } else if (computed_tools.map(obj => obj.function.name).includes(tool_call.function.name)) {
-                console.log("pass1:", tool_call.function.name, tool_call.function.arguments);
-                tool_path = "/api/computed_tool/" + tool_call.function.name;
-                body = { args: tool_call.function.arguments };
+                //tool_path = "/api/langchain/" + tool_call.function.name;
+                //body = { args: tool_call.function.arguments };
+                tool_path = "/api/simulate_tool";
+                body = { tool: tool_call.function.name, tool_args: tool_call.function.arguments };
+            } else if (computed_tools.map(obj => obj.function.name).includes(tool_call.function.name)) {                
+                //tool_path = "/api/computed_tool/" + tool_call.function.name;
+                //body = { args: tool_call.function.arguments };
+                tool_path = "/api/simulate_tool";
+                body = { tool: tool_call.function.name, tool_args: tool_call.function.arguments };
             } 
-            
             else {
                 tool_path = "/api/simulate_tool";
                 body = { tool: tool_call.function.name, tool_args: tool_call.function.arguments };
@@ -451,8 +453,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             //appendNodes([splitnode, ...branchnodes]);
             appendNodes([new Node({type:"forward", messages:[
                 {role: "system", content: `To enhance your reasoning process, we have integrated you into a larger system, where the user can input its request and then you will find the solution step by step. \n \n
-                Each step is called an operation and there are different operations available. First, choose the forward operation to let yourself generate a plan to solve the problem and map it to a sequence of operations. Then choose the operations according to the generated plan. The last operation should be the final answer. \n \n
-                In each step, first state the whole sequence and where you are right now. \n \n
+                For each step, you will be asked to choose what kind of step you want to take next, and you will be able to choose from a given set of operations. \n \n 
+                You should first choose the forward operation to let yourself generate a plan to solve the problem and map it to a sequence of operations. Then alternate between the operations according to the generated plan and forward operations, to state at which point of the plan you are. The last operation should be the final answer. \n \n
                 When you get unexpected results, you are allowed to dynamically change the plan and instead choose another operation that would be the more helpful to continue the reasoning process.`},
                 {role: "system", content: `Available operations are:  \n \n
                     - Forward: Simply lets you generate. \n
@@ -661,7 +663,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
 
         //const choose_operation_prompt = "To enhance your reasoning process, we have integrated you into a larger system, where the user can input its request and then you will find the solution step by step. Each step is called an operation and there are different operations available. Choose, which operation would be the most helpful to continue the reasoning process."
-        const choose_operation_prompt = "Choose the next operation";
+        const choose_operation_prompt = "Choose the next operation from the given set, by calling the respective function. Do not generate text here, stick to doing 1 function call. If you do want to generate text, simply choose the forward function and wait to be queried by it.";
         const system_message: MessageType = {role: "system", content: choose_operation_prompt}
         
         console.log("chatMessages: ", chatMessages);

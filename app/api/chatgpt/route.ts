@@ -34,6 +34,7 @@ export async function POST(request: NextRequest){
     //generate response / tool calls
     response = await openai.chat.completions.create({
       model: "gpt-4-turbo-2024-04-09",
+      //model: "gpt-3.5-turbo-1106",
       messages: [...standardMessages, ...messages, ...(hallucinated_error? errorMessage : [])],
       temperature: 1.0,
       max_tokens: 256,
