@@ -92,7 +92,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
     
     const [selectedNode, setSelectedNode ] = useState<number>(-1); // initialize selectedNode with -1
-    const [chatMessages, setChatMessages] = useState<MessageType[]>([]);
+    const [chatMessages, setChatMessages] = useState<MessageType[]>([
+    ]);
     const [idCount, setIdCount] = useState<number>(0); // use as (idCount + Node.idCount_temp) to get the actual current id
     const [nodes, setNodes] = useState<{ [id: number]: Node }>({});
 
@@ -103,6 +104,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
     // collect all messages from the head node until a specific node, per default until the selected node
     function collectChat ( nodeId: number = selectedNode ) : MessageType[] {
+        console.log(nodes)
+        
         if (nodeId === -1) {
             setChatMessages([]);
             return [];
@@ -445,7 +448,22 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
                 branchnodes[i].textembedding = textembeddings[i];
             }
             splitnode.textembedding = textembedding_split;
-            appendNodes([splitnode, ...branchnodes]);
+            //appendNodes([splitnode, ...branchnodes]);
+            appendNodes([new Node({type:"forward", messages:[
+                {role: "system", content: `To enhance your reasoning process, we have integrated you into a larger system, where the user can input its request and then you will find the solution step by step. \n \n
+                Each step is called an operation and there are different operations available. First, choose the forward operation to let yourself generate a plan to solve the problem and map it to a sequence of operations. Then choose the operations according to the generated plan. The last operation should be the final answer. \n \n
+                In each step, first state the whole sequence and where you are right now. \n \n
+                When you get unexpected results, you are allowed to dynamically change the plan and instead choose another operation that would be the more helpful to continue the reasoning process.`},
+                {role: "system", content: `Available operations are:  \n \n
+                    - Forward: Simply lets you generate. \n
+                    - Tools: Lets you generate function calls to a set of related tools. \n
+                    - Split: Lets you generate 3 distinct answers. It is useful for concurrently trying different strategies, and later aggregating their results. \n
+                    - Aggregate: Lets you summarize three different reasoning chains. \n
+                    - Refine: Lets you check, wether any mistake might have happened, by reflecting about the last steps. \n
+                    - Attention: Lets you remind yourself of what was important, by reflecting about the last steps. \n
+                    - Final Answer: Lets you provide a precise and clear answer to the question. \n    
+                `}
+            ], parents:[], children:[]})]);
         });
     }
      
@@ -642,7 +660,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         if (selectedNode === -1) return;
         if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
 
-        const choose_operation_prompt = "To enhance your reasoning process, we have integrated you into a larger system, where the user can input its request and then you will find the solution step by step. Each step is called an operation and there are different operations available. Choose, which operation would be the most helpful to continue the reasoning process."
+        //const choose_operation_prompt = "To enhance your reasoning process, we have integrated you into a larger system, where the user can input its request and then you will find the solution step by step. Each step is called an operation and there are different operations available. Choose, which operation would be the most helpful to continue the reasoning process."
+        const choose_operation_prompt = "Choose the next operation";
         const system_message: MessageType = {role: "system", content: choose_operation_prompt}
         
         console.log("chatMessages: ", chatMessages);
