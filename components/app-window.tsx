@@ -150,11 +150,13 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
     // append new nodes to the graph, select the latest node
     function appendNodes (newNodes: Node[]) {
+        console.log("appendNodes", nodes, newNodes);
         let updatedNodes = {...nodes};
         for (let n of newNodes){
             updatedNodes[n.id] = n;            
         }
         setNodes(updatedNodes);
+        console.log(updatedNodes);
         setSelectedNode(newNodes[newNodes.length - 1].id);
     }
 
@@ -187,6 +189,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
     // forward operation
     async function reasoning_forward() {
+
         // only allowed if selected node is a leaf or no node is selected
         if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
         const response = await fetch("/api/chatgpt", {
@@ -222,6 +225,9 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
     // tools operation
     async function reasoning_tools() {
+
+        console.log("tools called");
+
         // only allowed if selected node is a leaf or no node is selected
         if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
 
@@ -402,6 +408,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     async function reasoning_parallel_split() {        
         if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
 
+        /*
         // any amount valid
         const approaches: string[] = [
             "Without the help of any tools, try to solve the problem on your own. REMEMBER, DO NOT USE ANY TOOL! Do it with your knowledge only.",
@@ -451,11 +458,13 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             }
             splitnode.textembedding = textembedding_split;
             //appendNodes([splitnode, ...branchnodes]);
-            appendNodes([new Node({type:"forward", messages:[
+        });*/
+        appendNodes([new Node({type:"forward", messages:[
                 {role: "system", content: `To enhance your reasoning process, we have integrated you into a larger system, where the user can input its request and then you will find the solution step by step. \n \n
-                For each step, you will be asked to choose what kind of step you want to take next, and you will be able to choose from a given set of operations. \n \n 
-                You should first choose the forward operation to let yourself generate a plan to solve the problem and map it to a sequence of operations. Then alternate between the operations according to the generated plan and forward operations, to state at which point of the plan you are. The last operation should be the final answer. \n \n
-                When you get unexpected results, you are allowed to dynamically change the plan and instead choose another operation that would be the more helpful to continue the reasoning process.`},
+                First of all, generate a reasoning plan for the task that you can follow and map it to respective operations from the list provided later. It doesn't have to be straight forward but can use various additional operations, e.g. refine, attention or split-aggregate patterns, where it makes sense, to make sure you have the most complete answer in the end.\n\n
+                Then Before each step you will be asked to think about the plan, where you are right now, and what would be the next step in the reason process of the actual task. 
+                When you get unexpected results, you are allowed to dynamically change the plan and instead choose another operation that would be the more helpful to continue the reasoning process.\n\n
+                Afterwards, you will be prompted to select the operation / next step that you just figured out. The last operation should be the final answer.`},
                 {role: "system", content: `Available operations are:  \n \n
                     - Forward: Simply lets you generate. \n
                     - Tools: Lets you generate function calls to a set of related tools. \n
@@ -466,7 +475,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
                     - Final Answer: Lets you provide a precise and clear answer to the question. \n    
                 `}
             ], parents:[], children:[]})]);
-        });
     }
      
     // aggregate operation
@@ -661,12 +669,36 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     async function reasoning_auto() {
         if (selectedNode === -1) return;
         if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
+/*
+        // Planning
+        const planning_prompt = "Only state the plan and where you are right now. Think about what would be the next operation according to the plan and wether it does make sense. Do not actually reason here. If you want to, choose the forward operation in the step afterwards.";
+        const planning_prompt_mes: MessageType = {role: "system", content: planning_prompt};
 
-        //const choose_operation_prompt = "To enhance your reasoning process, we have integrated you into a larger system, where the user can input its request and then you will find the solution step by step. Each step is called an operation and there are different operations available. Choose, which operation would be the most helpful to continue the reasoning process."
-        const choose_operation_prompt = "Choose the next operation from the given set, by calling the respective function. Do not generate text here, stick to doing 1 function call. If you do want to generate text, simply choose the forward function and wait to be queried by it.";
-        const system_message: MessageType = {role: "system", content: choose_operation_prompt}
-        
-        console.log("chatMessages: ", chatMessages);
+        console.log("chatMessages", chatMessages);
+
+        let response = await fetch("/api/chatgpt", {
+            method:"POST",
+            headers:{
+            "Content-Type": "application/json",
+            },
+            body:JSON.stringify({
+            messages: [...chatMessages, planning_prompt_mes],
+            use_tools: false
+            })
+        });
+        let result = await response.json();
+        const planning_assistant_message: MessageType = {role: result.choices[0].message.role, content: result.choices[0].message.content}
+        const planning_node: Node = new Node({type:"forward", messages:[planning_prompt_mes, planning_assistant_message], parents:([selectedNode]), children:[]});
+        if(selectedNode !== -1){
+            planning_node.parents = [selectedNode];
+            nodes[selectedNode].children?.push(planning_node.id);
+        }
+        appendNodes([planning_node]);
+*/
+        //TODO: Wait until appended / find workaround
+
+        const operation_prompt = "Choose the next operation from the given set, by calling the respective function. Do not generate text here, stick to doing 1 function call. If you do want to generate further text, simply choose the forward function and wait to be queried by it.";
+        const operation_prompt_mes: MessageType = {role: "system", content: operation_prompt}
 
         // get response
         const response = await fetch("/api/chatgpt", {
@@ -675,7 +707,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             "Content-Type": "application/json",
             },
             body:JSON.stringify({
-            messages: [...chatMessages, system_message],
+            messages: [...chatMessages, operation_prompt_mes],
             auto_mode: true
             })
         });
