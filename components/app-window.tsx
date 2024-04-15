@@ -92,8 +92,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
     
     const [selectedNode, setSelectedNode ] = useState<number>(-1); // initialize selectedNode with -1
-    const [chatMessages, setChatMessages] = useState<MessageType[]>([
-    ]);
+    const [chatMessages, setChatMessages] = useState<MessageType[]>([]);
     const [idCount, setIdCount] = useState<number>(0); // use as (idCount + Node.idCount_temp) to get the actual current id
     const [nodes, setNodes] = useState<{ [id: number]: Node }>({});
 
@@ -103,9 +102,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     }, [selectedNode])
 
     // collect all messages from the head node until a specific node, per default until the selected node
-    function collectChat ( nodeId: number = selectedNode ) : MessageType[] {
-        console.log(nodes)
-        
+    function collectChat ( nodeId: number = selectedNode ) : MessageType[] {        
         if (nodeId === -1) {
             setChatMessages([]);
             return [];
@@ -150,13 +147,11 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
     // append new nodes to the graph, select the latest node
     function appendNodes (newNodes: Node[]) {
-        console.log("appendNodes", nodes, newNodes);
         let updatedNodes = {...nodes};
         for (let n of newNodes){
             updatedNodes[n.id] = n;            
         }
         setNodes(updatedNodes);
-        console.log(updatedNodes);
         setSelectedNode(newNodes[newNodes.length - 1].id);
     }
 
@@ -226,8 +221,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     // tools operation
     async function reasoning_tools() {
 
-        console.log("tools called");
-
         // only allowed if selected node is a leaf or no node is selected
         if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
 
@@ -252,18 +245,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
         // iterate over tool calls and get results
         for (let tool_call of res_mess.tool_calls) {
-            /*
-            // pass tool calls to the simulate_tool function, long-term this will be replaced by a dynamic call to the respective tool
-            const tool_answer = await fetch("/api/simulate_tool", {
-                method: "POST",
-                headers:{
-                    "Content-Type": "application/json",
-                    },
-                body:JSON.stringify({
-                    tool: tool_call.function.name,
-                    tool_args: tool_call.function.arguments
-                })
-            });*/
+            
             let tool_path = "";
             let body = {};
 
@@ -408,7 +390,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     async function reasoning_parallel_split() {        
         if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
 
-        /*
         // any amount valid
         const approaches: string[] = [
             "Without the help of any tools, try to solve the problem on your own. REMEMBER, DO NOT USE ANY TOOL! Do it with your knowledge only.",
@@ -458,8 +439,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             }
             splitnode.textembedding = textembedding_split;
             //appendNodes([splitnode, ...branchnodes]);
-        });*/
-        appendNodes([new Node({type:"forward", messages:[
+        });
+        /*appendNodes([new Node({type:"forward", messages:[
                 {role: "system", content: `To enhance your reasoning process, we have integrated you into a larger system, where the user can input its request and then you will find the solution step by step. \n \n
                 First of all, generate a reasoning plan for the task that you can follow and map it to respective operations from the list provided later. It doesn't have to be straight forward but can use various additional operations, e.g. refine, attention or split-aggregate patterns, where it makes sense, to make sure you have the most complete answer in the end.\n\n
                 Then Before each step you will be asked to think about the plan, where you are right now, and what would be the next step in the reason process of the actual task. 
@@ -474,7 +455,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
                     - Attention: Lets you remind yourself of what was important, by reflecting about the last steps. \n
                     - Final Answer: Lets you provide a precise and clear answer to the question. \n    
                 `}
-            ], parents:[], children:[]})]);
+            ], parents:[], children:[]})]);*/
     }
      
     // aggregate operation
@@ -669,33 +650,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     async function reasoning_auto() {
         if (selectedNode === -1) return;
         if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
-/*
-        // Planning
-        const planning_prompt = "Only state the plan and where you are right now. Think about what would be the next operation according to the plan and wether it does make sense. Do not actually reason here. If you want to, choose the forward operation in the step afterwards.";
-        const planning_prompt_mes: MessageType = {role: "system", content: planning_prompt};
-
-        console.log("chatMessages", chatMessages);
-
-        let response = await fetch("/api/chatgpt", {
-            method:"POST",
-            headers:{
-            "Content-Type": "application/json",
-            },
-            body:JSON.stringify({
-            messages: [...chatMessages, planning_prompt_mes],
-            use_tools: false
-            })
-        });
-        let result = await response.json();
-        const planning_assistant_message: MessageType = {role: result.choices[0].message.role, content: result.choices[0].message.content}
-        const planning_node: Node = new Node({type:"forward", messages:[planning_prompt_mes, planning_assistant_message], parents:([selectedNode]), children:[]});
-        if(selectedNode !== -1){
-            planning_node.parents = [selectedNode];
-            nodes[selectedNode].children?.push(planning_node.id);
-        }
-        appendNodes([planning_node]);
-*/
-        //TODO: Wait until appended / find workaround
 
         const operation_prompt = "Choose the next operation from the given set, by calling the respective function. Do not generate text here, stick to doing 1 function call. If you do want to generate further text, simply choose the forward function and wait to be queried by it.";
         const operation_prompt_mes: MessageType = {role: "system", content: operation_prompt}
