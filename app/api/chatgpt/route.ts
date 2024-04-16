@@ -10,7 +10,7 @@ export async function POST(request: NextRequest){
 
   const params = await request.json();
   const messages = params.messages;
-  const use_tools = params.use_tools;
+  const use_tools = params.use_tools ?? false;
   const auto_mode = params.auto_mode ?? false;
 
   const standardMessages = [{
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest){
     if(tries > 3){
       return NextResponse.json({error: "Could not generate a valid response."})
     }
-    console.log("ChatGPT Attempt number: ", tries);
+    //console.log("ChatGPT Attempt number: ", tries);
 
     //generate response / tool calls
     response = await openai.chat.completions.create({
@@ -57,7 +57,8 @@ export async function POST(request: NextRequest){
     }
   } while (hallucinated_error);
   
-  console.log(response.choices[0].message)
-  try{console.log(response.choices[0].message.tool_calls[0]?.function ?? "");}catch{}
+  console.log(response.usage.total_tokens);
+  //console.log(response.choices[0].message)
+  //try{console.log(response.choices[0].message.tool_calls[0]?.function ?? "");}catch{}
   return NextResponse.json(response)
 }

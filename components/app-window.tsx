@@ -93,9 +93,10 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     
     const [selectedNode, setSelectedNode ] = useState<number>(-1); // initialize selectedNode with -1
     const [chatMessages, setChatMessages] = useState<MessageType[]>([]); // messages for (task-solving) chat model
-    const [planMessages, setPlanMessages] = useState<MessageType[]>([]); // messages for planning model
     const [idCount, setIdCount] = useState<number>(0); // use as (idCount + Node.idCount_temp) to get the actual current id
     const [nodes, setNodes] = useState<{ [id: number]: Node }>({});
+
+    const [autoModeTokens, setAutoModeTokens] = useState<number>(0); // additionally used tokens (approx) for auto mode
 
     // update collected messages, triggered when selectedNode is changed
     useEffect(() => {
@@ -181,12 +182,10 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             level++;
         }
 
-        console.log("Current reasoning graph: \n" + graph)
-
-        return "";
+        return graph;
     }
 
-    function computePlanChat () : MessageType[] {
+    function computePlanChat() : MessageType[] {
         let messages: MessageType[] = [
             {role: "system", content: `Hello PlanningModel (PM)! Your role is to navigate another LLM, called TSM (TaskSolvingModel), through the reasoning process. Here's how it works: 
             
@@ -199,7 +198,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         ];
 
         const graph: string = currentReasoningGraph();
-        messages.push({role: "system", content: "This is the current reasoning graph:" + graph});
+        messages.push({role: "system", content: "This is the current reasoning graph:\n" + graph});
 
         messages.push({role: "system", content: `Available operations are:
         
@@ -214,7 +213,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             Please choose a node and operation to continue the reasoning process. IMPORTANT: Only leaf nodes can be selected for operations. Nodes with children are not selectable.
         `});
 
-
         return messages;
     }
 
@@ -226,7 +224,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         }
         setNodes(updatedNodes);
         setSelectedNode(newNodes[newNodes.length - 1].id);
-        console.log(nodes, updatedNodes);
     }
 
     // operations for reasoning are also called reasoning functions in the following
@@ -258,8 +255,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
     // forward operation
     async function reasoning_forward() {
-
-        currentReasoningGraph();
 
         // only allowed if selected node is a leaf or no node is selected
         if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
@@ -727,9 +722,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         if (selectedNode === -1) return;
         if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
 
-        const operation_prompt = "Choose the next operation from the given set, by calling the respective function. Do not generate text here, stick to doing 1 function call. If you do want to generate further text, simply choose the forward function and wait to be queried by it.";
-        const operation_prompt_mes: MessageType = {role: "system", content: operation_prompt}
-
         // get response
         const response = await fetch("/api/chatgpt", {
             method:"POST",
@@ -737,7 +729,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             "Content-Type": "application/json",
             },
             body:JSON.stringify({
-            messages: [...chatMessages, operation_prompt_mes],
+            messages: [...computePlanChat()],
             auto_mode: true
             })
         });
@@ -750,7 +742,13 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
         const res_mess = result.choices[0].message;
         let operation: keyof ReasoningFunctionsType = res_mess.tool_calls[0].function.name ?? "forward";
-        console.log("auto chose operation: ", operation);
+        
+        console.log("-------------------")
+        console.log("Automode Next step")
+        console.log(computePlanChat())
+        console.log("Chose operation: ", operation, "Current used tokens for auto-mode", autoModeTokens + result.usage.total_tokens);
+        console.log("-------------------")
+        setAutoModeTokens(autoModeTokens + result.usage.total_tokens);
         if(reasoning_functions[operation]){
             let func = reasoning_functions[operation] as (() => void); // User operation is of different type, but LLM won't choose it / doesn't know about it anyway
             await func();
