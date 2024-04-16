@@ -92,7 +92,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
     
     const [selectedNode, setSelectedNode ] = useState<number>(-1); // initialize selectedNode with -1
-    const [chatMessages, setChatMessages] = useState<MessageType[]>([]);
+    const [chatMessages, setChatMessages] = useState<MessageType[]>([]); // messages for (task-solving) chat model
+    const [planMessages, setPlanMessages] = useState<MessageType[]>([]); // messages for planning model
     const [idCount, setIdCount] = useState<number>(0); // use as (idCount + Node.idCount_temp) to get the actual current id
     const [nodes, setNodes] = useState<{ [id: number]: Node }>({});
 
@@ -145,6 +146,78 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         return chatMessages;
     }
 
+    function currentReasoningGraph(): string {
+        //return all nodes in BFS order, seperated by levels
+        let graph = "";
+        let level = 0;
+        const visited: { [id: number]: boolean } = {};
+        const queue: Node[] = [];
+
+        const startNode = Object.values(nodes).find(node => node.head() === true);
+        if(startNode){
+            visited[startNode.id] = true;
+            queue.push(startNode);
+        }
+
+        while (queue.length > 0) {
+            let size = queue.length;
+            graph += "Level " + level + ": \n";
+            
+            for (let i = 0; i < size; i++) {
+                const currNode = queue.shift() as Node;
+                let nodeText = "Node_"  + currNode.id + ": " + currNode.type + "\n - Children: " ;
+                nodeText += currNode.leaf()? "None, This is a leaf node! \n - Messages: \n   <" : currNode.children?.map(childId => "Node_" + childId).join(", ") + "\n - Messages: \n   <"
+                nodeText += currNode.messages.map(m => m.content).join(">\n   <") + ">\n";
+                graph += nodeText;
+                for (let childId of currNode.children ?? []) {
+                    if (!visited[childId]) {
+                        visited[childId] = true;
+                        queue.push(nodes[childId]);
+                    }
+                }
+            }
+
+            graph += "\n";
+            level++;
+        }
+
+        console.log("Current reasoning graph: \n" + graph)
+
+        return "";
+    }
+
+    function computePlanChat () : MessageType[] {
+        let messages: MessageType[] = [
+            {role: "system", content: `Hello PlanningModel (PM)! Your role is to navigate another LLM, called TSM (TaskSolvingModel), through the reasoning process. Here's how it works: 
+            
+            The TSM will find the answer to the user's query step by step, building a reasoning graph (each step = 1 node in the graph). In each step the TSM executes one of various operations, that you have to select. I said reasoning graph instead of chain, because there are also operations to split the reasoning into parallel branches, trying several approaches and aggregating their results at a later point. 
+            
+            You will use the TSM to build such a reasoning graph and make it find the answer. The last operation should be 'final answer'. Therefore, you will choose the next operation for the TSM over and over again by calling the respective function.
+            Also you have to select, at which node the operation should be performed, and pass it as parameter, in case there are several active branches.
+            
+            Your should oversee the overall reasoning flow and adjust the plan as needed based on the TSM's progress. Analyse the query from different perspectives and guide the TSM to the most promising path.`}
+        ];
+
+        const graph: string = currentReasoningGraph();
+        messages.push({role: "system", content: "This is the current reasoning graph:" + graph});
+
+        messages.push({role: "system", content: `Available operations are:
+        
+            Forward: Simply lets TSM generate.
+            Tools: Lets TSM generate function calls to a set of related tools.
+            Split: Lets TSM generate 3 distinct answers. It is useful for concurrently trying different strategies, and later aggregating their results.
+            Aggregate: Lets TSM summarize three different reasoning chains.
+            Refine: Lets TSM check, wether any mistake might have happened, by reflecting about the last steps.
+            Attention: Lets TSM remind yourself of what was important, by reflecting about the last steps.
+            Final Answer: Lets TSM provide a precise and clear answer to the question.
+            
+            Please choose a node and operation to continue the reasoning process. IMPORTANT: Only leaf nodes can be selected for operations. Nodes with children are not selectable.
+        `});
+
+
+        return messages;
+    }
+
     // append new nodes to the graph, select the latest node
     function appendNodes (newNodes: Node[]) {
         let updatedNodes = {...nodes};
@@ -153,6 +226,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         }
         setNodes(updatedNodes);
         setSelectedNode(newNodes[newNodes.length - 1].id);
+        console.log(nodes, updatedNodes);
     }
 
     // operations for reasoning are also called reasoning functions in the following
@@ -184,6 +258,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
     // forward operation
     async function reasoning_forward() {
+
+        currentReasoningGraph();
 
         // only allowed if selected node is a leaf or no node is selected
         if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
@@ -438,7 +514,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
                 branchnodes[i].textembedding = textembeddings[i];
             }
             splitnode.textembedding = textembedding_split;
-            //appendNodes([splitnode, ...branchnodes]);
+            appendNodes([splitnode, ...branchnodes]);
         });
         /*appendNodes([new Node({type:"forward", messages:[
                 {role: "system", content: `To enhance your reasoning process, we have integrated you into a larger system, where the user can input its request and then you will find the solution step by step. \n \n
