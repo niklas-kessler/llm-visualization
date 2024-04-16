@@ -170,7 +170,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
                 nodeText += currNode.messages.map(m => m.content).join(">\n   <") + ">\n";
                 graph += nodeText;
                 for (let childId of currNode.children ?? []) {
-                    if (!visited[childId]) {
+                    if (!visited[childId] && nodes[childId].level(nodes) === (currNode?.level(nodes) ?? 0) + 1) {
                         visited[childId] = true;
                         queue.push(nodes[childId]);
                     }
