@@ -58,7 +58,7 @@ export async function POST(request: NextRequest){
   } while (hallucinated_error);
   
   console.log(response.usage.total_tokens);
-  //console.log(response.choices[0].message)
+  console.log(response.choices[0].message)
   //try{console.log(response.choices[0].message.tool_calls[0]?.function ?? "");}catch{}
   return NextResponse.json(response)
 }

@@ -119,13 +119,20 @@ const operations = [
 {
     type: "function",
     function: {
-    name: "split",  //actually "parallel_split", but doesn't then it only generates the first word ("parallel" instead of "parallel_split")
-    description: "This operation lets the LLM generate 3 distinct answers. It is useful for concurrently trying different strategies, and later aggregating their results.",
+    name: "parallelsplit",  //"parallel_split" doesn't work, since then it only generates the first word ("parallel" instead of "parallel_split")
+    description: "This operation lets the LLM generate multiple seperate answers, each following a different approach. It is useful for concurrently trying different strategies, and later aggregating their results.",
     parameters: {
         type: "object",
         properties: {
+          approaches: {
+            type: "array",
+            items: {
+              type: "string"
+            },
+            description: "The different approaches to follow. Each approach should be a string.",
+          },
         },
-        required: [],
+        required: ["approaches"],
     },
     }
 },

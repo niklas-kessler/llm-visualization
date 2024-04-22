@@ -202,13 +202,13 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
         messages.push({role: "system", content: `Available operations are:
         
-            Forward: Simply lets TSM generate.
-            Tools: Lets TSM generate function calls to a set of related tools.
-            Split: Lets TSM generate 3 distinct answers. It is useful for concurrently trying different strategies, and later aggregating their results.
-            Aggregate: Lets TSM summarize three different reasoning chains.
-            Refine: Lets TSM check, wether any mistake might have happened, by reflecting about the last steps.
-            Attention: Lets TSM remind yourself of what was important, by reflecting about the last steps.
-            Final Answer: Lets TSM provide a precise and clear answer to the question.
+            forward: Simply lets TSM generate.
+            tools: Lets TSM generate function calls to a set of related tools.
+            parallelsplit: Lets TSM generate 3 distinct answers. It is useful for concurrently trying different strategies, and later aggregating their results.
+            aggregate: Lets TSM summarize three different reasoning chains.
+            refine: Lets TSM check, wether any mistake might have happened, by reflecting about the last steps.
+            attention: Lets TSM remind yourself of what was important, by reflecting about the last steps.
+            final: Lets TSM provide a precise and clear answer to the question.
             
             Please choose a node and operation to continue the reasoning process. IMPORTANT: Only leaf nodes can be selected for operations. Nodes with children are not selectable.
         `});
@@ -457,17 +457,26 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         });
     }
 
+
+    // TODO: Fix parameter passing for parallel split
+    const stdappr: {"approaches": string[]} = { "approaches": [
+        "Without the help of any tools, try to solve the problem on your own. REMEMBER, DO NOT USE ANY TOOL! Do it with your knowledge only.",
+        "Try using the best fitting tool to solve the problem.",
+        "Avoid the most obvious action and try something different. E.g. only gather background information and try to conclude what happened. Or use a tool thats not obvious at the first glance but could provide additional helpful information."
+    ]};
+
     // split operation
-    async function reasoning_parallel_split() {        
+    async function reasoning_parallel_split(approaches_arg: {approaches: string[]} = stdappr) {        
         if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
 
-        // any amount valid
-        const approaches: string[] = [
-            "Without the help of any tools, try to solve the problem on your own. REMEMBER, DO NOT USE ANY TOOL! Do it with your knowledge only.",
-            "Try using the best fitting tool to solve the problem.",
-            "Avoid the most obvious action and try something different. E.g. only gather background information and try to conclude what happened. Or use a tool thats not obvious at the first glance but could provide additional helpful information."
-        ]
+        let approaches: string[] = approaches_arg.approaches
+        console.log("Splitting with approaches: ", approaches);
         
+        if (approaches.length > 5){
+            console.log("Too many approaches, Max. 5. We will only consider the first 5.");
+            approaches = approaches.slice(0, 5);
+        }
+
         const splitnode: Node = new Node({type:"split", messages:[], parents: ([selectedNode]), children:[]})
         if(selectedNode !== -1){
             splitnode.parents = [selectedNode];
@@ -742,6 +751,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
         const res_mess = result.choices[0].message;
         let operation: keyof ReasoningFunctionsType = res_mess.tool_calls[0].function.name ?? "forward";
+        let args: any = res_mess.tool_calls[0].function.arguments ?? [];
         
         console.log("-------------------")
         console.log("Automode Next step")
@@ -750,8 +760,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         console.log("-------------------")
         setAutoModeTokens(autoModeTokens + result.usage.total_tokens);
         if(reasoning_functions[operation]){
-            let func = reasoning_functions[operation] as (() => void); // User operation is of different type, but LLM won't choose it / doesn't know about it anyway
-            await func();
+            let func = reasoning_functions[operation] as ((args: any) => void); // User operation is of different type, but LLM won't choose it / doesn't know about it anyway
+            await func(args);
         }
         return;
     }

@@ -24,7 +24,7 @@ export default function ReasoningButtons({ showButtons, setShowButtons, reasonin
                 <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={tools}>
                     {node_text("tools")}
                 </button>
-                <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={parallelsplit}>
+                <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={() => parallelsplit()}>
                     <text style={{ fontSize: "smaller", whiteSpace: "nowrap", overflow: "hidden" }}>
                         {node_text("split")}
                     </text>
