@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai"
-import { langchain_tools, computed_tools, simulated_tools, operations } from "@/app/utils/tools";
+import { operations } from "@/app/utils/tools";
 
 export async function POST(request: NextRequest){
   /** This function can be used to send requests to the LLM and let it generate an answer, either with or without tool-use. */
@@ -10,16 +10,15 @@ export async function POST(request: NextRequest){
 
   const params = await request.json();
   const messages = params.messages;
-  const use_tools = params.use_tools ?? false;
+  const nodes = params.nodes;
 
   const standardMessages = [{
   role:"system", content:"You are a helpful assistant."
   }]
-  const errorMessage = [{role:"system", content:"You just generated a hallucinated tool call. Only existing tools can be used. Try again."}]
-  const all_tools = langchain_tools.concat(simulated_tools).concat(computed_tools)
+  const errorMessage = [{role:"system", content:"Only leaf nodes can be used. Try again."}]
 
   let response: any = {};
-  let hallucinated_error = false;
+  let false_node = false;
   let tries = 0;
 
   // Try to generate a valid response without calls to hallucinated tools (max 3 tries)
@@ -32,30 +31,30 @@ export async function POST(request: NextRequest){
 
     //generate response / tool calls
     response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo-1106",
-      messages: [...standardMessages, ...messages, ...(hallucinated_error? errorMessage : [])],
+      model: "gpt-4-turbo-2024-04-09",
+      messages: [...standardMessages, ...messages, ...(false_node? errorMessage : [])],
       temperature: 1.0,
       max_tokens: 256,
-      tools: all_tools,
-      tool_choice: (use_tools)? "auto" : "none",
+      tools: operations,
+      tool_choice: "auto"
     })    
 
     // Check if the generated response contains a tool call that is not in the list of existing tools    
-    hallucinated_error = false;
-
-    for (const tool_call of response.choices[0].message.tool_calls ?? []){
-
-      if (use_tools && !all_tools.map(obj => obj.function.name).includes(tool_call.function.name)){
-      
-            hallucinated_error = true;
-            console.log("Error: hallucinated the tool", tool_call.function.name);  
-      
-          } 
+    false_node = false;
+    let node_for_operation = null;
+    
+    try {
+      node_for_operation = await JSON.parse(response.choices[0].message.tool_calls[0].function.arguments)
+      if (!nodes[node_for_operation].leaf()){
+        false_node = true;
+      }
+    } catch (error) {
+      console.log("Error: no node for operation");
     }
-  } while (hallucinated_error);
+  } while (false_node);
   
   console.log(response.usage.total_tokens);
   console.log(response.choices[0].message)
-  //try{console.log(response.choices[0].message.tool_calls[0]?.function ?? "");}catch{}
+
   return NextResponse.json(response)
 }

@@ -732,14 +732,14 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     // operation for automatically choosing an operation
     async function reasoning_auto() {
         // get response
-        const response = await fetch("/api/chatgpt", {
+        const response = await fetch("/api/chatgpt-automode", {
             method:"POST",
             headers:{
             "Content-Type": "application/json",
             },
             body:JSON.stringify({
             messages: [...computePlanChat()],
-            auto_mode: true
+            nodes: nodes
             })
         });
         const result = await response.json();

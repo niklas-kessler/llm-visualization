@@ -152,7 +152,7 @@ const operations = [
     type: "function",
     function: {
     name: "aggregate",
-    description: "This operation lets the LLM summarize the results of the different reasoning branches created by the split operation. Can only be called if there was a split operation before, that hasn't been aggregated yet. Do not call this operation if you haven't called split before.",
+    description: "This operation lets the LLM summarize the results of the different reasoning branches created by the split operation. Can only be called if there was a split operation before, that hasn't been aggregated yet. Do not call this operation on the split node but on one of the leaf-nodes of the branches.",
     parameters: {
         type: "object",
         properties: {
