@@ -98,8 +98,12 @@ const operations = [
     parameters: {
         type: "object",
         properties: {
+          node: {
+            type: "integer",
+            description: "The node to perform the forward operation on.",
+          },
         },
-        required: [],
+        required: ["node"],
     },
     }
 },
@@ -111,8 +115,12 @@ const operations = [
     parameters: {
         type: "object",
         properties: {
+          node: {
+            type: "integer",
+            description: "The node to perform the tools operation on.",
+          },
         },
-        required: [],
+        required: ["node"],
     },
     }
 },
@@ -124,6 +132,10 @@ const operations = [
     parameters: {
         type: "object",
         properties: {
+          node: {
+            type: "integer",
+            description: "The node to perform the aggregate operation on.",
+          },
           approaches: {
             type: "array",
             items: {
@@ -132,7 +144,7 @@ const operations = [
             description: "The different approaches to follow. Each approach should be a string.",
           },
         },
-        required: ["approaches"],
+        required: ["node","approaches"],
     },
     }
 },
@@ -144,8 +156,12 @@ const operations = [
     parameters: {
         type: "object",
         properties: {
+          node: {
+            type: "integer",
+            description: "The node to perform the aggregate operation on.",
+          },
         },
-        required: [],
+        required: ["node"],
     },
     }
 },
@@ -157,8 +173,12 @@ const operations = [
     parameters: {
         type: "object",
         properties: {
+          node: {
+            type: "integer",
+            description: "The node to perform the refine operation on.",
+          },
         },
-        required: [],
+        required: ["node"],
     },
     }
 },
@@ -170,8 +190,12 @@ const operations = [
     parameters: {
         type: "object",
         properties: {
+          node: {
+            type: "integer",
+            description: "The node to perform the attention operation on.",
+          },
         },
-        required: [],
+        required: ["node"],
     },
     }
 },
@@ -183,8 +207,12 @@ const operations = [
     parameters: {
         type: "object",
         properties: {
+          node: {
+            type: "integer",
+            description: "The node to perform the delete operation on.",
+          },
         },
-        required: [],
+        required: ["node"],
     },
     }
 },
@@ -196,8 +224,12 @@ const operations = [
   parameters: {
       type: "object",
       properties: {
+        node: {
+          type: "integer",
+          description: "The node to perform the final operation on.",
+        },
       },
-      required: [],
+      required: ["node"],
   },
   }
 },

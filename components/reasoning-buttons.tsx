@@ -18,10 +18,10 @@ export default function ReasoningButtons({ showButtons, setShowButtons, reasonin
             </button>
             {showButtons &&
             <div className={`flex flex${horizontal?"":"-col"} ml-2 self-center`}>
-                <button className={`w-11 h-11 rounded-${horizontal?"l":"t"}-md border-2 border-zinc-700 bg-zinc-400 text-sm`} onClick={forward}>
+                <button className={`w-11 h-11 rounded-${horizontal?"l":"t"}-md border-2 border-zinc-700 bg-zinc-400 text-sm`} onClick={() => forward()}>
                     {node_text("forward")}
                 </button>
-                <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={tools}>
+                <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={() => tools()}>
                     {node_text("tools")}
                 </button>
                 <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={() => parallelsplit()}>
@@ -29,21 +29,21 @@ export default function ReasoningButtons({ showButtons, setShowButtons, reasonin
                         {node_text("split")}
                     </text>
                 </button>
-                <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={aggregate}>
+                <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={() => aggregate()}>
                     <text style={{ fontSize: "smaller", whiteSpace: "nowrap", overflow: "hidden" }}>
                         {node_text("aggregate")}
                     </text>
                 </button>
-                <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={refine}>
+                <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={() => refine()}>
                     {node_text("refine")}
                 </button>
-                <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={attention}>
+                <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={() => attention()}>
                     {node_text("attention")}
                 </button>
-                <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={backward}>
+                <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={() => backward()}>
                     {node_text("backward")}
                 </button>
-                <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={final}>
+                <button className="w-11 h-11 border-2 border-zinc-700 bg-zinc-400" onClick={() => final()}>
                     {node_text("final")}
                 </button>
                 <button className={`w-11 h-11 rounded-${horizontal?"r":"b"}-md border-2 border-zinc-700 bg-zinc-400`} onClick={reasoning_auto}>

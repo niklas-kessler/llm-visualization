@@ -9,15 +9,15 @@ export interface MessageType {
 }
 
 export interface ReasoningFunctionsType {
-    user: (prompt: string) => void,
-    forward: () => void,
-    tools: () => void,
-    backward: () => void,
-    refine: () => void,
-    parallelsplit: (approaches_arg?: {approaches: string[]}) => void,
-    aggregate: () => void,
-    attention: () => void,
-    final: () => void,
+    user: (prompt: string, node?: number) => void,
+    forward: (node_for_operation?: number) => void,
+    tools: (node_for_operation?: number) => void,
+    backward: (node_for_operation?: number) => void,
+    refine: (node_for_operation?: number) => void,
+    parallelsplit: (approaches_arg?: {approaches: string[]}, node_for_operation?: number) => void,
+    aggregate: (node_for_operation?: number) => void,
+    attention: (node_for_operation?: number) => void,
+    final: (node_for_operation?: number) => void,
 }
 
 export interface Node {

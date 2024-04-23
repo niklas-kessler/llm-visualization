@@ -229,16 +229,16 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     // operations for reasoning are also called reasoning functions in the following
 
     // user operation
-    async function reasoning_user(prompt: string) {
+    async function reasoning_user(prompt: string, node_for_operation: number = selectedNode) {
         // only allowed if selected node is a leaf or no node is selected
-        if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
+        if (node_for_operation !== -1 && (nodes[node_for_operation].children?.length ?? 0) > 0) return;
 
         const userMessage: MessageType = {role: "user", content: prompt};            
         
         const node: Node = new Node({type:"user", messages: [userMessage], parents: [], children:[]})
-        if(selectedNode !== -1){
-            node.parents = [selectedNode];
-            nodes[selectedNode].children?.push(node.id);
+        if(node_for_operation !== -1){
+            node.parents = [node_for_operation];
+            nodes[node_for_operation].children?.push(node.id);
         }
 
         // extract keywords and calculate textembedding
@@ -254,10 +254,12 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     }
 
     // forward operation
-    async function reasoning_forward() {
+    async function reasoning_forward(node_for_operation: number = selectedNode) {
+
+        console.log("inside operation, node:", node_for_operation);
 
         // only allowed if selected node is a leaf or no node is selected
-        if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
+        if (node_for_operation !== -1 && (nodes[node_for_operation].children?.length ?? 0) > 0) return;
         const response = await fetch("/api/chatgpt", {
             method:"POST",
             headers:{
@@ -272,9 +274,9 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const assistant_message: MessageType = {role: result.choices[0].message.role, content: result.choices[0].message.content}
         
         const node: Node = new Node({type:"forward", messages:[assistant_message], parents: [], children:[]})
-        if(selectedNode !== -1){
-            node.parents = [selectedNode];
-            nodes[selectedNode].children?.push(node.id);
+        if(node_for_operation !== -1){
+            node.parents = [node_for_operation];
+            nodes[node_for_operation].children?.push(node.id);
         }
 
         // extract keywords and calculate textembedding
@@ -290,10 +292,11 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     }
 
     // tools operation
-    async function reasoning_tools() {
+    async function reasoning_tools(node_for_operation: number = selectedNode) {
 
         // only allowed if selected node is a leaf or no node is selected
-        if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
+        console.log("inside operation, node:", node_for_operation);
+        if (node_for_operation !== -1 && (nodes[node_for_operation]?.children?.length ?? 0) > 0) return;
 
         const system_message_before = {role:'user', content:'Call tools to help you with the reasoning process.'}
 
@@ -352,9 +355,9 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const system_message_after = { role: 'system', content: tool_results_string };
 
         const node: Node = new Node({ type: "tools", messages: [system_message_before, system_message_after], parents: [], children: [] });
-        if (selectedNode !== -1) {
-            node.parents = [selectedNode];
-            nodes[selectedNode].children?.push(node.id);
+        if (node_for_operation !== -1) {
+            node.parents = [node_for_operation];
+            nodes[node_for_operation].children?.push(node.id);
         }
 
         // extract keywords and calculate textembedding
@@ -394,22 +397,22 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     }
 
     // backward operation
-    function reasoning_backward() {
-        if (selectedNode === -1) return;
+    function reasoning_backward(node_for_operation: number = selectedNode) {
+        if (node_for_operation === -1) return;
 
-        const curr_node = nodes[selectedNode];
+        const curr_node = nodes[node_for_operation];
         const parentIds = curr_node.parents?.map(parentId => nodes[parentId].id) ?? [];
         let updatedNodes = {...nodes};
         
         // first, delete all children if there are any
-        if (updatedNodes[selectedNode].children) {
-            deleteChildren(selectedNode, updatedNodes);
+        if (updatedNodes[node_for_operation].children) {
+            deleteChildren(node_for_operation, updatedNodes);
         } 
         
-        delete updatedNodes[selectedNode];
+        delete updatedNodes[node_for_operation];
         for (const parentId of parentIds) {
             if (parentId !== -1) {
-                updatedNodes[parentId].children?.splice(updatedNodes[parentId].children?.indexOf(selectedNode) as number, 1);   
+                updatedNodes[parentId].children?.splice(updatedNodes[parentId].children?.indexOf(node_for_operation) as number, 1);   
             }
         }
 
@@ -418,9 +421,9 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     }
 
     // refine operation
-    async function reasoning_refine() {
-        if (selectedNode === -1) return;
-        if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
+    async function reasoning_refine(node_for_operation: number = selectedNode) {
+        if (node_for_operation === -1) return;
+        if ((nodes[node_for_operation].children?.length ?? 0) > 0) return;
 
         // system prompt
         const refine_prompt="Reflect and overthink your previous answer. Is there anything incorrect?"
@@ -439,10 +442,10 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const result = await response.json();
         const assistant_message: MessageType = {role: result.choices[0].message.role, content: result.choices[0].message.content}
         
-        const node: Node = new Node({type: "refine",  messages:[system_message, assistant_message], parents:([selectedNode]), children:[]})
-        if(selectedNode !== -1){
-            node.parents = [selectedNode];
-            nodes[selectedNode].children?.push(node.id);
+        const node: Node = new Node({type: "refine",  messages:[system_message, assistant_message], parents:([node_for_operation]), children:[]})
+        if(node_for_operation !== -1){
+            node.parents = [node_for_operation];
+            nodes[node_for_operation].children?.push(node.id);
         }
 
         // extract keywords and calculate textembedding
@@ -466,8 +469,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     ]};
 
     // split operation
-    async function reasoning_parallel_split(approaches_arg: {approaches: string[]} = stdappr) {        
-        if (selectedNode !== -1 && (nodes[selectedNode].children?.length ?? 0) > 0) return;
+    async function reasoning_parallel_split(approaches_arg: {approaches: string[]} = stdappr, node_for_operation: number = selectedNode) {        
+        if (node_for_operation !== -1 && (nodes[node_for_operation].children?.length ?? 0) > 0) return;
 
         let approaches: string[] = approaches_arg.approaches
         console.log("Splitting with approaches: ", approaches);
@@ -477,10 +480,10 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             approaches = approaches.slice(0, 5);
         }
 
-        const splitnode: Node = new Node({type:"split", messages:[], parents: ([selectedNode]), children:[]})
-        if(selectedNode !== -1){
-            splitnode.parents = [selectedNode];
-            nodes[selectedNode].children?.push(splitnode.id);
+        const splitnode: Node = new Node({type:"split", messages:[], parents: ([node_for_operation]), children:[]})
+        if(node_for_operation !== -1){
+            splitnode.parents = [node_for_operation];
+            nodes[node_for_operation].children?.push(splitnode.id);
         }
 
         const branchnodes: Node[] = [];
@@ -539,11 +542,11 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     }
      
     // aggregate operation
-    async function reasoning_aggregate() {
-        if (selectedNode === -1) return;
-        if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
+    async function reasoning_aggregate(node_for_operation: number = selectedNode) {
+        if (node_for_operation === -1) return;
+        if ((nodes[node_for_operation].children?.length ?? 0) > 0) return;
 
-        let split_node = nodes[selectedNode].findSplit(nodes);
+        let split_node = nodes[node_for_operation].findSplit(nodes);
         if (split_node === undefined) return;
 
         async function aggregate(node: Node, i:number) {
@@ -649,9 +652,9 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     }
 
     // attention operation
-    async function reasoning_attention() {
-        if (selectedNode === -1) return;
-        if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
+    async function reasoning_attention(node_for_operation: number = selectedNode) {
+        if (node_for_operation === -1) return;
+        if ((nodes[node_for_operation].children?.length ?? 0) > 0) return;
 
         const refine_prompt="Reflect about the reasoning steps you have taken. Which were the most important and what have you been able to conclude so far? How can you go on from here to find a solution."
         const system_message: MessageType = {role: "user", content: refine_prompt}
@@ -669,10 +672,10 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const result = await response.json();
         const assistant_message: MessageType = {role: result.choices[0].message.role, content: result.choices[0].message.content}
         
-        const node: Node = new Node({type: "attention", messages:[system_message, assistant_message], parents:([selectedNode]), children:[]})
-        if(selectedNode !== -1){
-            node.parents = [selectedNode];
-            nodes[selectedNode].children?.push(node.id);
+        const node: Node = new Node({type: "attention", messages:[system_message, assistant_message], parents:([node_for_operation]), children:[]})
+        if(node_for_operation !== -1){
+            node.parents = [node_for_operation];
+            nodes[node_for_operation].children?.push(node.id);
         }
         
         // extract keywords and calculate textembedding
@@ -688,9 +691,9 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     }
 
     // final answer operation
-    async function reasoning_final_answer() {
-        if (selectedNode === -1) return;
-        if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
+    async function reasoning_final_answer(node_for_operation: number = selectedNode) {
+        if (node_for_operation === -1) return;
+        if ((nodes[node_for_operation].children?.length ?? 0) > 0) return;
 
         const final_answer_prompt="Based on what you found out, provide a precise and clear answer to the question. If you haven't found a solution yet, try to summarize the most important findings so far. Make sure that your final answer is founded on the reasoning steps you have taken so far."
         const system_message: MessageType = {role: "user", content: final_answer_prompt}
@@ -708,10 +711,10 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const result = await response.json();
         const assistant_message: MessageType = {role: result.choices[0].message.role, content: result.choices[0].message.content}
         
-        const node: Node = new Node({type: "final", messages:[system_message, assistant_message], parents:([selectedNode]), children:[]})
-        if(selectedNode !== -1){
-            node.parents = [selectedNode];
-            nodes[selectedNode].children?.push(node.id);
+        const node: Node = new Node({type: "final", messages:[system_message, assistant_message], parents:([node_for_operation]), children:[]})
+        if(node_for_operation !== -1){
+            node.parents = [node_for_operation];
+            nodes[node_for_operation].children?.push(node.id);
         }
         
         // extract keywords and calculate textembedding
@@ -728,9 +731,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
     // operation for automatically choosing an operation
     async function reasoning_auto() {
-        if (selectedNode === -1) return;
-        if ((nodes[selectedNode].children?.length ?? 0) > 0) return;
-
         // get response
         const response = await fetch("/api/chatgpt", {
             method:"POST",
@@ -750,18 +750,47 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         }
 
         const res_mess = result.choices[0].message;
-        let operation: keyof ReasoningFunctionsType = res_mess.tool_calls[0].function.name ?? "forward";
-        let args: any = res_mess.tool_calls[0].function.arguments ?? [];
+        let operation: keyof ReasoningFunctionsType;
+        if(res_mess.tool_calls[0].function.name){
+            operation = res_mess.tool_calls[0].function.name;
+        } else {
+            console.log("Error: No operation selected. Using forward as default.");
+            operation = "forward";
+        }
+         
+        let args : {node?: number, [key: string]: any} = JSON.parse(res_mess.tool_calls[0].function.arguments) ?? {};
+        let node_for_operation = selectedNode;
         
+        if (args.node !== undefined){
+            if (nodes[args.node]){ 
+            node_for_operation = args.node;
+            } else {
+                console.log("Error: Unavailable node selected. Using selected node as default.");
+            }
+            args = {...args};
+            delete args.node;
+        } else {
+            console.log("Error: No node selected. Using selected node as default.");
+        }
+
         console.log("-------------------")
         console.log("Automode Next step")
         console.log(computePlanChat())
-        console.log("Chose operation: ", operation, "Current used tokens for auto-mode", autoModeTokens + result.usage.total_tokens);
+        console.log("Chose operation:", operation, "on node:", node_for_operation);
+        console.log("Current used tokens for auto-mode: ", autoModeTokens + result.usage.total_tokens)
         console.log("-------------------")
         setAutoModeTokens(autoModeTokens + result.usage.total_tokens);
+
         if(reasoning_functions[operation]){
-            let func = reasoning_functions[operation] as ((args: any) => void); // User operation is of different type, but LLM won't choose it / doesn't know about it anyway
-            await func(args);
+            let func = reasoning_functions[operation] as ((args?: any, node_for_operation?: number) => void); // User operation is of different type, but LLM won't choose it / doesn't know about it anyway
+            console.log("input is args: ", args, "node: ", node_for_operation)
+            console.log("current nodes", nodes)
+            if(Object.keys(args).length === 0){
+                await node_for_operation !== -1? func(node_for_operation) : func();
+            } else {
+                await node_for_operation !== -1? func(args, node_for_operation) : func(args);
+            }
+            
         }
         return;
     }
