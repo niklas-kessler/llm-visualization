@@ -34,8 +34,8 @@ export async function POST(request: NextRequest){
     response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo-1106",
       messages: [...standardMessages, ...messages, ...(hallucinated_error? errorMessage : [])],
-      temperature: 1.0,
-      max_tokens: 256,
+      temperature: 0.8,
+      max_tokens: 512,
       tools: all_tools,
       tool_choice: (use_tools)? "auto" : "none",
     })    
@@ -54,8 +54,10 @@ export async function POST(request: NextRequest){
     }
   } while (hallucinated_error);
   
-  console.log(response.usage.total_tokens);
-  console.log(response.choices[0].message)
+  //console.log(response.usage.total_tokens);
+  //console.log(response.choices[0].message)
   //try{console.log(response.choices[0].message.tool_calls[0]?.function ?? "");}catch{}
+
+  console.log(messages)
   return NextResponse.json(response)
 }

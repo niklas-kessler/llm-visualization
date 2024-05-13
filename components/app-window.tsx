@@ -187,14 +187,19 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
     function computePlanChat() : MessageType[] {
         let messages: MessageType[] = [
-            {role: "system", content: `Hello PlanningModel (PM)! Your role is to navigate another LLM, called TSM (TaskSolvingModel), through the reasoning process. Here's how it works: 
+            {role: "system", content: `Hello PlanningModel (PM)! There is another language model, called TSM (TaskSolvingModel), that tries to solve a users task, going step-by-step. 
             
-            The TSM will find the answer to the user's query step by step, building a reasoning graph (each step = 1 node in the graph). In each step the TSM executes one of various operations, that you have to select. I said reasoning graph instead of chain, because there are also operations to split the reasoning into parallel branches, trying several approaches and aggregating their results at a later point. 
+            Each step can be one of various operations, like generating text, calling tools, splitting into parallel branches, aggregating results, refining or providing a final answer.
             
-            You will use the TSM to build such a reasoning graph and make it find the answer. The last operation should be 'final answer'. Therefore, you will choose the next operation for the TSM over and over again by calling the respective function.
-            Also you have to select, at which node the operation should be performed, and pass it as parameter, in case there are several active branches.
+            Your role is to navigate the TSM through the reasoning process, choosing each next operation. 
             
-            Your should oversee the overall reasoning flow and adjust the plan as needed based on the TSM's progress. Analyse the query from different perspectives and guide the TSM to the most promising path.`}
+            This will build a reasoning graph (each step = 1 node). I said reasoning graph instead of chain, because there are also operations to split the reasoning into parallel branches, trying several approaches and aggregating their results at a later point. 
+            
+            Guide the TSM and make it find the answer, by calling the respective function for the next operation. Also select on which (leaf-) node the operation should be performed, in case there are several active branches. 
+            
+            Parallely trying different approaches and analysing the query from different perspectives by splitting might be promising.
+            
+            Your should oversee the overall reasoning flow and adjust the plan as needed based on the TSM's progress.`}
         ];
 
         const graph: string = currentReasoningGraph();
@@ -260,13 +265,16 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
         // only allowed if selected node is a leaf or no node is selected
         if (node_for_operation !== -1 && (nodes[node_for_operation].children?.length ?? 0) > 0) return;
+
+        const messages = collectChat(node_for_operation); // run collectChat again, to ensure its up to date (in case setSelectedNode/setChatMessages still waits for reload)
+
         const response = await fetch("/api/chatgpt", {
             method:"POST",
             headers:{
             "Content-Type": "application/json",
             },
             body:JSON.stringify({
-            messages: [...chatMessages],
+            messages: [...messages],
             use_tools: false
             })
         });
@@ -298,6 +306,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         console.log("inside operation, node:", node_for_operation);
         if (node_for_operation !== -1 && (nodes[node_for_operation]?.children?.length ?? 0) > 0) return;
 
+        const messages = collectChat(node_for_operation); // run collectChat again, to ensure its up to date (in case setSelectedNode/setChatMessages still waits for reload)
         const system_message_before = {role:'user', content:'Call tools to help you with the reasoning process.'}
 
         const response = await fetch("/api/chatgpt", {
@@ -306,7 +315,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             "Content-Type": "application/json",
             },
             body:JSON.stringify({
-            messages: [...chatMessages, system_message_before],
+            messages: [...messages, system_message_before],
             use_tools: true
             })
         });
@@ -425,8 +434,9 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         if (node_for_operation === -1) return;
         if ((nodes[node_for_operation].children?.length ?? 0) > 0) return;
 
-        // system prompt
-        const refine_prompt="Reflect and overthink your previous answer. Is there anything incorrect?"
+        const messages = collectChat(node_for_operation); // run collectChat again, to ensure its up to date (in case setSelectedNode/setChatMessages still waits for reload)        
+
+        const refine_prompt="Analyze your previous answer. Was there anything incorrect or improvable?" // system prompt
         const system_message: MessageType = {role: "user", content: refine_prompt}
 
         // get response
@@ -436,7 +446,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             "Content-Type": "application/json",
             },
             body:JSON.stringify({
-            messages: [...chatMessages]
+            messages: [...messages, system_message]
             })
         });
         const result = await response.json();
@@ -460,8 +470,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         });
     }
 
-
-    // TODO: Fix parameter passing for parallel split
+    // standard approaches
     const stdappr: {"approaches": string[]} = { "approaches": [
         "Without the help of any tools, try to solve the problem on your own. REMEMBER, DO NOT USE ANY TOOL! Do it with your knowledge only.",
         "Try using the best fitting tool to solve the problem.",
@@ -471,6 +480,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     // split operation
     async function reasoning_parallel_split(approaches_arg: {approaches: string[]} = stdappr, node_for_operation: number = selectedNode) {        
         if (node_for_operation !== -1 && (nodes[node_for_operation].children?.length ?? 0) > 0) return;
+
+        const messages = collectChat(node_for_operation); // run collectChat again, to ensure its up to date (in case setSelectedNode/setChatMessages still waits for reload)
 
         let approaches: string[] = approaches_arg.approaches
         console.log("Splitting with approaches: ", approaches);
@@ -488,14 +499,14 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
         const branchnodes: Node[] = [];
         for (const approach of approaches) {
-            const approach_message: MessageType = {role: "system", content: "Using the following approach: " + approach}
+            const approach_message: MessageType = {role: "user", content: "Try to solve the problem strictly following this approach:" + approach}
             const response = await fetch("/api/chatgpt", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    messages: [...chatMessages, approach_message],
+                    messages: [...messages, approach_message],
                     temperature: 0.9,
                 }),
             });
@@ -523,22 +534,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             splitnode.textembedding = textembedding_split;
             appendNodes([splitnode, ...branchnodes]);
         });
-        /*appendNodes([new Node({type:"forward", messages:[
-                {role: "system", content: `To enhance your reasoning process, we have integrated you into a larger system, where the user can input its request and then you will find the solution step by step. \n \n
-                First of all, generate a reasoning plan for the task that you can follow and map it to respective operations from the list provided later. It doesn't have to be straight forward but can use various additional operations, e.g. refine, attention or split-aggregate patterns, where it makes sense, to make sure you have the most complete answer in the end.\n\n
-                Then Before each step you will be asked to think about the plan, where you are right now, and what would be the next step in the reason process of the actual task. 
-                When you get unexpected results, you are allowed to dynamically change the plan and instead choose another operation that would be the more helpful to continue the reasoning process.\n\n
-                Afterwards, you will be prompted to select the operation / next step that you just figured out. The last operation should be the final answer.`},
-                {role: "system", content: `Available operations are:  \n \n
-                    - Forward: Simply lets you generate. \n
-                    - Tools: Lets you generate function calls to a set of related tools. \n
-                    - Split: Lets you generate 3 distinct answers. It is useful for concurrently trying different strategies, and later aggregating their results. \n
-                    - Aggregate: Lets you summarize three different reasoning chains. \n
-                    - Refine: Lets you check, wether any mistake might have happened, by reflecting about the last steps. \n
-                    - Attention: Lets you remind yourself of what was important, by reflecting about the last steps. \n
-                    - Final Answer: Lets you provide a precise and clear answer to the question. \n    
-                `}
-            ], parents:[], children:[]})]);*/
     }
      
     // aggregate operation
@@ -656,8 +651,9 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         if (node_for_operation === -1) return;
         if ((nodes[node_for_operation].children?.length ?? 0) > 0) return;
 
-        const refine_prompt="Reflect about the reasoning steps you have taken. Which were the most important and what have you been able to conclude so far? How can you go on from here to find a solution."
-        const system_message: MessageType = {role: "user", content: refine_prompt}
+        const messages = collectChat(node_for_operation); // run collectChat again, to ensure its up to date (in case setSelectedNode/setChatMessages still waits for reload)
+        const attention_prompt="Reflect about the reasoning steps you have taken. Which were the most important and what have you been able to conclude so far? How can you go on from here to find a solution?"
+        const system_message: MessageType = {role: "user", content: attention_prompt}
 
         // get response
         const response = await fetch("/api/chatgpt", {
@@ -666,7 +662,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             "Content-Type": "application/json",
             },
             body:JSON.stringify({
-            messages: [...chatMessages]
+            messages: [...messages, system_message]
             })
         });
         const result = await response.json();
@@ -695,6 +691,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         if (node_for_operation === -1) return;
         if ((nodes[node_for_operation].children?.length ?? 0) > 0) return;
 
+        const messages = collectChat(node_for_operation); // run collectChat again, to ensure its up to date (in case setSelectedNode/setChatMessages still waits for reload)
         const final_answer_prompt="Based on what you found out, provide a precise and clear answer to the question. If you haven't found a solution yet, try to summarize the most important findings so far. Make sure that your final answer is founded on the reasoning steps you have taken so far."
         const system_message: MessageType = {role: "user", content: final_answer_prompt}
 
@@ -705,7 +702,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             "Content-Type": "application/json",
             },
             body:JSON.stringify({
-            messages: [...chatMessages]
+            messages: [...messages, system_message]
             })
         });
         const result = await response.json();

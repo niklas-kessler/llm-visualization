@@ -111,7 +111,7 @@ const operations = [
     type: "function",
     function: {
     name: "tools",
-    description: "This operation lets the LLM generate function calls to a set of related tools.",
+    description: "Use this operation, when the LLM wants to or should use an external tool, i.e. generate function calls to a set of related tools.",
     parameters: {
         type: "object",
         properties: {
@@ -152,13 +152,13 @@ const operations = [
     type: "function",
     function: {
     name: "aggregate",
-    description: "This operation lets the LLM summarize the results of the different reasoning branches created by the split operation. Can only be called if there was a split operation before, that hasn't been aggregated yet. Do not call this operation on the split node but on one of the leaf-nodes of the branches.",
+    description: "After you created multiple reasoning paths with the split node, you can use this operation to aggregate the results of the individual branches. Call this operation only on the leaf nodes of the branches, not the split node itself. Only call this, when each of the paths itself is fully examined and has noticable results.",
     parameters: {
         type: "object",
         properties: {
           node: {
             type: "integer",
-            description: "The node to perform the aggregate operation on.",
+            description: "The node to perform the aggregate operation on. This is not the split node itself. Instead only call this on one of the leaf nodes of the different reasoning paths.",
           },
         },
         required: ["node"],
@@ -169,7 +169,7 @@ const operations = [
     type: "function",
     function: {
     name: "refine",
-    description: "This operation prompts the LLM to reflect about its previous answer and correct it, if it contains mistakes.",
+    description: "If you are doubtful about any reasoning step and suspect errors to have happened, call this operation to let the LLM reflect about its previous answer and correct it, if it contains mistakes.",
     parameters: {
         type: "object",
         properties: {
@@ -220,7 +220,7 @@ const operations = [
   type: "function",
   function: {
   name: "final",
-  description: "Call this operation to finalize the reasoning process, or when you think you are stuck and have no chance of solving the task. The LLM will generate a final answer based on the results of the reasoning process, or at least summarize its findings.",
+  description: "Do you think the LLM is done and don't you have any doubts or does it have no chance of solving the task? Call this operation only then, to finalize the reasoning process and let it generate a final answer.",
   parameters: {
       type: "object",
       properties: {
@@ -235,4 +235,4 @@ const operations = [
 },
 ]
 
-export { langchain_tools, computed_tools, simulated_tools, operations}
+export {langchain_tools, computed_tools, simulated_tools, operations}

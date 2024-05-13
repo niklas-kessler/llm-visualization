@@ -33,7 +33,7 @@ export async function POST(request: NextRequest){
     response = await openai.chat.completions.create({
       model: "gpt-4-turbo-2024-04-09",
       messages: [...standardMessages, ...messages, ...(false_node? errorMessage : [])],
-      temperature: 1.0,
+      temperature: 0.8,
       max_tokens: 256,
       tools: operations,
       tool_choice: "auto"
@@ -53,8 +53,9 @@ export async function POST(request: NextRequest){
     }
   } while (false_node);
   
-  console.log(response.usage.total_tokens);
-  console.log(response.choices[0].message)
+  //console.log(response.usage.total_tokens);
+  //console.log(response.choices[0].message)
+  console.log(messages)
 
   return NextResponse.json(response)
 }
