@@ -27,13 +27,14 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         leaf: () => boolean;
         head: () => boolean;
         
-        constructor({ type, messages, parents, children }: {
+        constructor({ type, messages, parents, children, predef_id }: {
             type: "user" | "forward" | "tools" | "split" | "aggregate" | "refine" | "attention" | "final";
             messages: MessageType[];
             parents?: number[];
             children?: number[];
+            predef_id?: number;
         }) {
-            this.id = idCount + Node.idCount_temp;
+            this.id = predef_id ?? idCount + Node.idCount_temp;
             setIdCount(idCount + Node.idCount_temp + 1);
             Node.idCount_temp++;
             this.type = type;
@@ -95,6 +96,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     const [chatMessages, setChatMessages] = useState<MessageType[]>([]); // messages for (task-solving) chat model
     const [idCount, setIdCount] = useState<number>(0); // use as (idCount + Node.idCount_temp) to get the actual current id
     const [nodes, setNodes] = useState<{ [id: number]: Node }>({});
+    const [loadGraphString, setLoadGraphString] = useState<string>('');
 
     const [autoModeTokens, setAutoModeTokens] = useState<number>(0); // additionally used tokens (approx) for auto mode
 
@@ -204,7 +206,6 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
         const graph: string = currentReasoningGraph();
         messages.push({role: "system", content: "This is the current reasoning graph:\n" + graph});
-
         messages.push({role: "system", content: `Available operations are:
         
             forward: Simply lets TSM generate.
@@ -229,6 +230,27 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         }
         setNodes(updatedNodes);
         setSelectedNode(newNodes[newNodes.length - 1].id);
+    }
+
+    // print json-graph
+    function printGraph() {
+        const data = JSON.stringify(nodes);
+        console.log(data);
+    }
+
+    // load json-graph
+    function loadGraph(graph:string) {
+        const parsedNodes: { [id: number]: Node } = JSON.parse(graph);
+        const actualNodes: { [id: number]: Node } = {};
+        Object.keys(parsedNodes).forEach((key) => {
+            const id = parseInt(key);
+            const { type, messages, parents, children }  = parsedNodes[id];
+            const node = new Node({type, messages, parents, children, predef_id: id});
+            actualNodes[id] = node;
+        });
+        console.log("Graph loaded: ", parsedNodes);
+        setNodes(actualNodes);
+        setSelectedNode(parseInt(Object.keys(actualNodes)[Object.keys(actualNodes).length - 1]));
     }
 
     // operations for reasoning are also called reasoning functions in the following
@@ -776,6 +798,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         console.log("Chose operation:", operation, "on node:", node_for_operation);
         console.log("Current used tokens for auto-mode: ", autoModeTokens + result.usage.total_tokens)
         console.log("-------------------")
+        console.log("JSON graph: ")
         setAutoModeTokens(autoModeTokens + result.usage.total_tokens);
 
         if(reasoning_functions[operation]){
@@ -809,7 +832,19 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             <div className="h-full flex">
                 {showHistory && (
                     <div className=" basis-1/6 border-r-2 bg-stone-200 border-zinc-400">
-                        <History />
+                        <button className="m-3 border-2 border-zinc-700 bg-zinc-400" onClick={printGraph}>Print Graph</button>
+                        <form className="flex-grow flex p-4" onSubmit={(e) => {
+                            e.preventDefault();
+                            // fire callback...
+                            if (loadGraphString === "") {
+                                return;
+                            }
+                            loadGraph(loadGraphString);
+                            setLoadGraphString('');
+                        }}>
+                        <textarea placeholder="Load graph from file... " value={loadGraphString} onChange={(e) => setLoadGraphString(e.target.value)} className="border rounded-l-md border-zinc-700 focus:outline-none"></textarea>
+                        <input type="submit" className="px-4 py-2 bg-zinc-400 border-2 border-zinc-700 rounded-r-md" />
+                        </form>
                     </div>
                 )}
                 <div className="flex-1">
