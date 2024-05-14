@@ -54,7 +54,8 @@ export default function GraphKeywordGraph({ fullScreen, nodes, selectedKeywordNo
     const parents = currentNode?.parents?.map((parentId) => nodesArr.find((node) => node.id === parentId)) ?? [];
     
     // y
-    const y = (parents[0]?.y ?? -70) + 70; //parent + 70, head node gets y=0 ("-70+70").
+    const parentsYMax = Math.max(...parents.map(parent => parent?.y ?? 0));
+    const y = (parentsYMax === -Infinity)? 0: parentsYMax + 70;
     
     // x
     // head node gets x=0
@@ -86,7 +87,7 @@ export default function GraphKeywordGraph({ fullScreen, nodes, selectedKeywordNo
 
     for (const childId of currentNode?.children ?? []) {
       const child = Object.values(nodes).find(node => node.id === childId);
-      if (child && !visited[child.id]) {
+      if (child && child.level(nodes) === (currentNode?.level(nodes) ?? 0) + 1 && !visited[child.id]) {
         visited[child.id] = true;
         queue.push(child);
       }
