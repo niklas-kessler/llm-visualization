@@ -13,7 +13,7 @@ export async function POST(request: NextRequest){
   const use_tools = params.use_tools ?? false;
 
   const standardMessages = [{
-  role:"system", content:"You are a helpful assistant."
+  role:"system", content:"You are incorporated into a reasoning framework. In each step, do the next reasoning step."
   }]
   const errorMessage = [{role:"system", content:"You just generated a hallucinated tool call. Only existing tools can be used. Try again."}]
   const all_tools = langchain_tools.concat(simulated_tools).concat(computed_tools)
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest){
 
     //generate response / tool calls
     response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo-1106",
+      model: "gpt-3.5-turbo-0125",
       messages: [...standardMessages, ...messages, ...(hallucinated_error? errorMessage : [])],
       temperature: 0.8,
       max_tokens: 512,
