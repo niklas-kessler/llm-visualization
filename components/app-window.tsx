@@ -27,12 +27,14 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         leaf: () => boolean;
         head: () => boolean;
         
-        constructor({ type, messages, parents, children, predef_id }: {
+        constructor({ type, messages, parents, children, predef_id, predef_keywords, predef_emb }: {
             type: "user" | "forward" | "tools" | "split" | "aggregate" | "refine" | "attention" | "final";
             messages: MessageType[];
             parents?: number[];
             children?: number[];
             predef_id?: number;
+            predef_keywords?: string[];
+            predef_emb?: number[];
         }) {
             this.id = predef_id ?? idCount + Node.idCount_temp;
             setIdCount(idCount + Node.idCount_temp + 1);
@@ -42,6 +44,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             this.messages = messages;
             this.parents = parents;
             this.children = children;
+            this.keywords = predef_keywords;
+            this.textembedding = predef_emb;
             this.leaf = () => (this.children?.length ?? 0) === 0;
             this.head = () => (this.parents?.length ?? 0) === 0;
         }
@@ -244,8 +248,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         const actualNodes: { [id: number]: Node } = {};
         Object.keys(parsedNodes).forEach((key) => {
             const id = parseInt(key);
-            const { type, messages, parents, children }  = parsedNodes[id];
-            const node = new Node({type, messages, parents, children, predef_id: id});
+            const { type, messages, parents, children, keywords, textembedding }  = parsedNodes[id];
+            const node = new Node({type, messages, parents, children, predef_id: id, predef_keywords: keywords, predef_emb: textembedding});
             actualNodes[id] = node;
         });
         console.log("Graph loaded: ", parsedNodes);
@@ -270,14 +274,19 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
         // extract keywords and calculate textembedding
         const relevant_messages = node.messages.map(m => m.content);
-        Promise.all([
-            extract_keywords({"inputs": relevant_messages}),
-            text_embedding(relevant_messages)
-        ]).then(([keywords, textembedding]) => {
-            node.keywords = keywords;
-            node.textembedding = textembedding;
+        if (node.keywords === undefined || node.textembedding === undefined) {
+            Promise.all([
+                extract_keywords({"inputs": relevant_messages}),
+                text_embedding(relevant_messages)
+            ]).then(([keywords, textembedding]) => {
+                node.keywords = keywords;
+                node.textembedding = textembedding;
+                appendNodes([node]);
+            });
+        } else {
             appendNodes([node]);
-        });
+        }
+        
     }
 
     // forward operation
@@ -311,14 +320,18 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
         // extract keywords and calculate textembedding
         const relevant_messages = node.messages.map(m => m.content);
-        Promise.all([
-            extract_keywords({"inputs": relevant_messages}),
-            text_embedding(relevant_messages)
-        ]).then(([keywords, textembedding]) => {
-            node.keywords = keywords;
-            node.textembedding = textembedding;
+        if (node.keywords === undefined || node.textembedding === undefined) {
+            Promise.all([
+                extract_keywords({"inputs": relevant_messages}),
+                text_embedding(relevant_messages)
+            ]).then(([keywords, textembedding]) => {
+                node.keywords = keywords;
+                node.textembedding = textembedding;
+                appendNodes([node]);
+            });
+        } else {
             appendNodes([node]);
-        });
+        }
     }
 
     // tools operation
@@ -393,14 +406,18 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
         // extract keywords and calculate textembedding
         const relevant_messages = [tool_result];
-        Promise.all([
-            extract_keywords({"inputs": relevant_messages}),
-            text_embedding(relevant_messages)
-        ]).then(([keywords, textembedding]) => {
-            node.keywords = keywords;
-            node.textembedding = textembedding;
+        if (node.keywords === undefined || node.textembedding === undefined) {
+            Promise.all([
+                extract_keywords({"inputs": relevant_messages}),
+                text_embedding(relevant_messages)
+            ]).then(([keywords, textembedding]) => {
+                node.keywords = keywords;
+                node.textembedding = textembedding;
+                appendNodes([node]);
+            });
+        } else {
             appendNodes([node]);
-        });
+        }
     }
 
     // delete all children for a node (helper function for backward operation)
@@ -482,14 +499,18 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
         // extract keywords and calculate textembedding
         const relevant_messages = [node.messages[1].content];
-        Promise.all([
-            extract_keywords({"inputs": relevant_messages}),
-            text_embedding(relevant_messages)
-        ]).then(([keywords, textembedding]) => {
-            node.keywords = keywords;
-            node.textembedding = textembedding;
+        if (node.keywords === undefined || node.textembedding === undefined) {
+            Promise.all([
+                extract_keywords({"inputs": relevant_messages}),
+                text_embedding(relevant_messages)
+            ]).then(([keywords, textembedding]) => {
+                node.keywords = keywords;
+                node.textembedding = textembedding;
+                appendNodes([node]);
+            });
+        } else {
             appendNodes([node]);
-        });
+        }
     }
 
     // standard approaches
@@ -544,18 +565,27 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         
         //extract keywords and calculate textembedding
         const relevant_messages: string[][] = branchnodes.map(node => node.messages.map(m => m.content))
-        Promise.all([
-            Promise.all(relevant_messages.map(messages => extract_keywords({"inputs": messages}))),
-            Promise.all(relevant_messages.map(messages => text_embedding(messages))),
-            text_embedding([])
-        ]).then(([keywords, textembeddings, textembedding_split]) => {
-            for (let i = 0; i < relevant_messages.length; i++) {
-                branchnodes[i].keywords = keywords[i];
-                branchnodes[i].textembedding = textembeddings[i];
-            }
-            splitnode.textembedding = textembedding_split;
+        
+        
+        const nodesWithoutTextEmbedding = [splitnode, ...branchnodes].filter(node => !node.textembedding);
+        const nodesWithoutKeywords = [splitnode, ...branchnodes].filter(node => !node.keywords);
+        if (nodesWithoutTextEmbedding.length > 0 || nodesWithoutKeywords.length > 0) {
+            Promise.all([
+                Promise.all(relevant_messages.map(messages => extract_keywords({"inputs": messages}))),
+                Promise.all(relevant_messages.map(messages => text_embedding(messages))),
+                text_embedding([])
+            ]).then(([keywords, textembeddings, textembedding_split]) => {
+                for (let i = 0; i < relevant_messages.length; i++) {
+                    branchnodes[i].keywords = keywords[i];
+                    branchnodes[i].textembedding = textembeddings[i];
+                }
+                splitnode.textembedding = textembedding_split;
+                appendNodes([splitnode, ...branchnodes]);
+            });
+        } else {
             appendNodes([splitnode, ...branchnodes]);
-        });
+        
+        }
     }
      
     // aggregate operation
@@ -654,15 +684,20 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
 
             // extract keywords and calculate textembedding
             const relevant_messages = [aggregate_node.messages[1].content];
-            Promise.all([
-                extract_keywords({"inputs": relevant_messages}),
-                text_embedding(relevant_messages)
-            ]).then(([keywords, textembedding]) => {
-                aggregate_node.keywords = keywords;
-                aggregate_node.textembedding = textembedding;
+            if (aggregate_node.keywords === undefined || aggregate_node.textembedding === undefined) {
+                Promise.all([
+                    extract_keywords({"inputs": relevant_messages}),
+                    text_embedding(relevant_messages)
+                ]).then(([keywords, textembedding]) => {
+                    aggregate_node.keywords = keywords;
+                    aggregate_node.textembedding = textembedding;
+                    appendNodes([aggregate_node]);
+                    return;
+                });
+            } else {
                 appendNodes([aggregate_node]);
                 return;
-            });
+            }
         }
 
         await aggregate(split_node, 0);        
@@ -698,14 +733,18 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         
         // extract keywords and calculate textembedding
         const relevant_messages = [node.messages[1].content];
-        Promise.all([
-            extract_keywords({"inputs": relevant_messages}),
-            text_embedding(relevant_messages)
-        ]).then(([keywords, textembedding]) => {
-            node.keywords = keywords;
-            node.textembedding = textembedding;
+        if (node.keywords === undefined || node.textembedding === undefined) {
+            Promise.all([
+                extract_keywords({"inputs": relevant_messages}),
+                text_embedding(relevant_messages)
+            ]).then(([keywords, textembedding]) => {
+                node.keywords = keywords;
+                node.textembedding = textembedding;
+                appendNodes([node]);
+            });
+        } else {
             appendNodes([node]);
-        });
+        }
     }
 
     // final answer operation
@@ -738,14 +777,19 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         
         // extract keywords and calculate textembedding
         const relevant_messages = [node.messages[1].content];
-        Promise.all([
-            extract_keywords({"inputs": relevant_messages}),
-            text_embedding(relevant_messages)
-        ]).then(([keywords, textembedding]) => {
-            node.keywords = keywords;
-            node.textembedding = textembedding;
+        if (node.keywords === undefined || node.textembedding === undefined) {
+            Promise.all([
+                extract_keywords({"inputs": relevant_messages}),
+                text_embedding(relevant_messages)
+            ]).then(([keywords, textembedding]) => {
+                node.keywords = keywords;
+                node.textembedding = textembedding;
+                appendNodes([node]);
+            });
+        } else {
             appendNodes([node]);
-        });
+        }
+
     }
 
     // operation for automatically choosing an operation
@@ -826,7 +870,7 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
         attention: reasoning_attention,
         final: reasoning_final_answer
     }
-
+    
     return(
         <main className="flex-1 overflow-hidden">
             <div className="h-full flex">
