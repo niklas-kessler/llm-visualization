@@ -12,9 +12,6 @@ export async function POST(request: NextRequest){
   const messages = params.messages;
   const nodes = params.nodes;
 
-  const standardMessages = [{
-  role:"system", content:"You are a helpful assistant."
-  }]
   const errorMessage = [{role:"system", content:"Only leaf nodes can be used. Try again."}]
 
   let response: any = {};
@@ -31,8 +28,8 @@ export async function POST(request: NextRequest){
 
     //generate response / tool calls
     response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-2024-04-09",
-      messages: [...standardMessages, ...messages, ...(false_node? errorMessage : [])],
+      model: "gpt-4o-2024-05-13",
+      messages: [...messages, ...(false_node? errorMessage : [])],
       temperature: 0.8,
       max_tokens: 256,
       tools: operations,

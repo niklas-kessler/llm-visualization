@@ -74,7 +74,7 @@ const node_color = (type: string, selected: boolean) => {
 async function extract_keywords(data: {inputs: string[]}) {
   console.log("Extracting Keywords");
 
-  const SKIP_KEYWORD_EXTRACTION = true; // experimental feature, set to true to skip keyword extraction
+  const SKIP_KEYWORD_EXTRACTION = false; // experimental feature, set to true to skip keyword extraction
   if (SKIP_KEYWORD_EXTRACTION) {
     return [];
   }
@@ -128,7 +128,7 @@ async function extract_keywords(data: {inputs: string[]}) {
     "Content-Type": "application/json",
     },
     body:JSON.stringify({
-    messages: [{role: "system", content: "Extract 1-4 keywords from the following text and give them  separated by a single comma without any additional text before or after: " + input}],
+    messages: [{role: "system", content: "Extract 1-4 keywords from the following text and give them separated by a single comma without any additional text before or after. Focus on important statements of the text and facts or numbers supporting them. This is the text:" + input}],
     use_tools: false
     })
   });
@@ -210,7 +210,7 @@ async function text_embedding(inputs: string[]){
   //For long inputs, mainly tool results (website content/...):
   //Approach 1 Cut: Only consider the first 8192 characters of the input (limit of the model), then get text_embedding
   //TODO: Approach 2: Summarize before calculating the text_embedding, e.g. with https://huggingface.co/facebook/bart-large-cnn
-  const SKIP_TEXT_EMBEDDING = true; // experimental feature, set to true to skip text embedding
+  const SKIP_TEXT_EMBEDDING = false; // experimental feature, set to true to skip text embedding
   if (SKIP_TEXT_EMBEDDING) {
     return Array(256).fill(0);
   }

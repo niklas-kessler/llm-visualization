@@ -220,7 +220,7 @@ const operations = [
   type: "function",
   function: {
   name: "final",
-  description: "Do you think the LLM is done and don't you have any doubts or does it have no chance of solving the task? Call this operation only then, to finalize the reasoning process and let it generate a final answer.",
+  description: "This operation lets the LLM summarize previous finding and generate a final answer from it. This only makes sense, when it has completed the reasoning and found all relevant pieces for answering the users question. It can also be called when u think it has no chance of solving the task anymore.s",
   parameters: {
       type: "object",
       properties: {

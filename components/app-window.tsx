@@ -199,13 +199,14 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             
             Your role is to navigate the TSM through the reasoning process, choosing each next operation. 
             
-            This will build a reasoning graph (each step = 1 node). I said reasoning graph instead of chain, because there are also operations to split the reasoning into parallel branches, trying several approaches and aggregating their results at a later point. 
+            This will build a reasoning graph (each step = 1 node). I said reasoning graph instead of chain, because there are also operations to split the reasoning into parallel branches, trying several approaches and operations to aggregate their results at a later point. 
             
             Guide the TSM and make it find the answer, by calling the respective function for the next operation. Also select on which (leaf-) node the operation should be performed, in case there are several active branches. 
             
-            Parallely trying different approaches and analysing the query from different perspectives by splitting might be promising.
+            When you use the split operation, keep in mind, that the branches are independent and don't know anything from each other. If e.g. one branch has discovered important information, do not finish the reasoning on another branch by calling the final node. 
+            Carefully think about which nodes and information belong to each branch and which do not or aggregate the branches to be safe. 
             
-            Your should oversee the overall reasoning flow and adjust the plan as needed based on the TSM's progress.`}
+            Oversee the overall reasoning flow and adjust the plan as needed based on the TSM's progress.`}
         ];
 
         const graph: string = currentReasoningGraph();
@@ -240,6 +241,48 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
     function printGraph() {
         const data = JSON.stringify(nodes);
         console.log(data);
+    }
+
+    // recalculate keywords
+    function recalculateKeywords() {
+        const updatedNodes = {...nodes};
+        for (let key in updatedNodes) {
+            let relevant_messages: string[] = [];
+            const node = updatedNodes[key];
+            if (node.type === "user" || node.type === "forward") {
+                relevant_messages = [node.messages[0].content];
+            } else if (node.type === "tools" || node.type === "aggregate" || node.type === "refine" || node.type === "attention" || node.type === "final") {
+                relevant_messages = [node.messages[1].content];
+            } else if (node.type === "split") {
+                continue;
+            }
+                
+            extract_keywords({"inputs": relevant_messages}).then(keywords => {
+                node.keywords = keywords;
+            });
+        }
+        setNodes(updatedNodes);
+    }
+
+    //recalculate textembeddings
+    function recalculateTextEmbeddings() {
+        const updatedNodes = {...nodes};
+        for (let key in updatedNodes) {
+            let relevant_messages: string[] = [];
+            const node = updatedNodes[key];
+            if (node.type === "user" || node.type === "forward") {
+                relevant_messages = [node.messages[0].content];
+            } else if (node.type === "tools" || node.type === "aggregate" || node.type === "refine" || node.type === "attention" || node.type === "final") {
+                relevant_messages = [node.messages[1].content];
+            } else if (node.type === "split") {
+                continue;
+            }
+                
+            text_embedding(relevant_messages).then(textembedding => {
+                node.textembedding = textembedding;
+            });
+        }
+        setNodes(updatedNodes);
     }
 
     // load json-graph
@@ -368,15 +411,15 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
             let body = {};
 
             if (langchain_tools.map(obj => obj.function.name).includes(tool_call.function.name)) {
-                //tool_path = "/api/langchain/" + tool_call.function.name;
-                //body = { args: tool_call.function.arguments };
-                tool_path = "/api/simulate_tool";
-                body = { tool: tool_call.function.name, tool_args: tool_call.function.arguments };
+                tool_path = "/api/langchain/" + tool_call.function.name;
+                body = { args: tool_call.function.arguments };
+                //tool_path = "/api/simulate_tool";
+                //body = { tool: tool_call.function.name, tool_args: tool_call.function.arguments };
             } else if (computed_tools.map(obj => obj.function.name).includes(tool_call.function.name)) {                
-                //tool_path = "/api/computed_tool/" + tool_call.function.name;
-                //body = { args: tool_call.function.arguments };
-                tool_path = "/api/simulate_tool";
-                body = { tool: tool_call.function.name, tool_args: tool_call.function.arguments };
+                tool_path = "/api/computed_tool/" + tool_call.function.name;
+                body = { args: tool_call.function.arguments };
+                //tool_path = "/api/simulate_tool";
+                //body = { tool: tool_call.function.name, tool_args: tool_call.function.arguments };
             } 
             else {
                 tool_path = "/api/simulate_tool";
@@ -889,6 +932,8 @@ export default function AppWindow({ showHistory, activeWindows }: AppWindowProps
                         <textarea placeholder="Load graph from file... " value={loadGraphString} onChange={(e) => setLoadGraphString(e.target.value)} className="border rounded-l-md border-zinc-700 focus:outline-none"></textarea>
                         <input type="submit" className="px-4 py-2 bg-zinc-400 border-2 border-zinc-700 rounded-r-md" />
                         </form>
+                        <button className="m-3 border-2 border-zinc-700 bg-zinc-400" onClick={recalculateKeywords}>Recalculate Keywords</button>
+                        <button className="m-3 border-2 border-zinc-700 bg-zinc-400" onClick={recalculateTextEmbeddings}>Recalculate Text Embeddings</button>
                     </div>
                 )}
                 <div className="flex-1">

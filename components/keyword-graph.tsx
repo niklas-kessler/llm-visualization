@@ -55,7 +55,7 @@ export default function KeywordGraph({ fullScreen, nodes, setNodes }: KeywordGra
             for (let keyword of keywords) {
                 if(keywordSettings[keyword]?.show === true){
                     // ...check wether the node contains it.
-                    if (messages.some((message: string) => message.toLowerCase().includes(keyword))){          
+                    if (messages.some((message: string) => message.toLowerCase().includes(keyword.toLowerCase()))){          
                         node.selectedKeywordsContained?.push(keyword);
                     }
                 }

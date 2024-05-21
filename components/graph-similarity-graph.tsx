@@ -134,7 +134,7 @@
          <circle
            r={20}
            fill={"#fff"}
-           stroke={similarity_node_color(node.similarityValue, colorMap)}
+           stroke={node.type !== "split" ? similarity_node_color(node.similarityValue, colorMap) : "#333"}
            strokeWidth={6}
          />
          <text fontSize="10px" textAnchor="middle">

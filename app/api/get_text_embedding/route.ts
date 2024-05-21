@@ -10,7 +10,7 @@ export async function POST(request: NextRequest){
     const params = await request.json();
     const str = params.str;    
     const embedding = await openai.embeddings.create({
-        model: "text-embedding-3-small",
+        model: "text-embedding-3-large",
         input: str,
         encoding_format: "float",
         dimensions: 256
