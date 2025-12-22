@@ -3,6 +3,9 @@ import OpenAI from "openai"
 
 export async function POST(request: NextRequest){
   /** This function can be used to send requests to the LLM and let it generate an answer, either with or without tool-use. */
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("Missing OPENAI_API_KEY");
+  }
   const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
   })
