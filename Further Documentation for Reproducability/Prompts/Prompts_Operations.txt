@@ -1,0 +1,109 @@
+The following prompts are given to the TSM, respective to which operation is called.
+
+==================
+Tool-Use-Operation 
+==================
+
+"
+Call tools to help you with the reasoning process.
+"
+
+A description of tools is passed as the following object:
+
+"
+[
+    {
+      type: "function",
+      function: {
+        name: "wikipedia_query_run",
+        description: "Look things up in wikipedia.",
+        parameters: {
+          type: "object",
+          properties: {
+            query: {
+              type: "string",
+              description: "The topic to search for and read about.",
+            },
+          },
+          required: ["query"],
+        },
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "wolfram_alpha",
+        description: "A wrapper around Wolfram Alpha. Useful for when you need to answer questions about Math, Science, Technology, Culture, Society and Everyday Life. Specifically good in calculations. Input should be a search query.",
+        parameters: {
+          type: "object",
+          properties: {
+            input: {
+              type: "string",
+              description: "The question you need to have answered.",
+            },
+          },
+          required: ["input"],
+        },
+      }
+    },
+    {
+        type: "function",
+        function: {
+          name: "brave_search",
+          description: "Get search results from the BraveSearch search-engine. Only returns headers and snippets. Useful for finding relevant websites that contain helpful information.",
+          parameters: {
+            type: "object",
+            properties: {
+              input: {
+                type: "string",
+                description: "The search query you want to use.",
+              },
+            },
+            required: ["input"],
+          },
+        }
+      },
+]
+"
+
+
+
+===============
+Split-Operation 
+===============
+
+The Planning Model calls this operation with an array of up to 5 strings containing approaches to solve the task.
+In each branch, the TaskSolvingModel is called with the following prefix, followed by the approach string.
+
+"
+Try to solve the problem strictly following this approach:
+"
+
+
+===================
+Aggregate-Operation 
+===================
+
+"
+Summarizing three different reasoning chains, the following highlights the most important results.
+"
+
+
+===================
+Attention-Operation
+===================
+
+"
+Reflect about the reasoning steps you have taken. Which were the most important and what have you been able to conclude so far? How can you go on from here to find a solution?
+"
+
+
+
+
+===============
+Final-Operation
+===============
+
+"
+Based on what you found out, provide a precise and clear answer to the question. If you haven't found a solution yet, try to summarize the most important findings so far. Make sure that your final answer is founded on the reasoning steps you have taken so far.
+"

@@ -1,0 +1,84 @@
+=================================
+Prompt 1/3 (General Instructions)
+=================================
+
+"
+Hello PlanningModel (PM)! There is another language model, called TSM (TaskSolvingModel), that tries to solve a users task, going step-by-step. 
+
+Each step can be one of various operations, like generating text, calling tools, splitting into parallel branches, aggregating results, refining or providing a final answer.
+            
+Your role is to navigate the TSM through the reasoning process, choosing each next operation. 
+            
+This will build a reasoning graph (each step = 1 node). I said reasoning graph instead of chain, because there are also operations to split the reasoning into parallel branches, trying several approaches and operations to aggregate their results at a later point. 
+            
+Guide the TSM and make it find the answer, by calling the respective function for the next operation. Also select on which (leaf-) node the operation should be performed, in case there are several active branches. 
+            
+When you use the split operation, keep in mind, that the branches are independent and don't know anything from each other. If e.g. one branch has discovered important information, do not finish the reasoning on another branch by calling the final node. Carefully think about which nodes and information belong to each branch and which do not or aggregate the branches to be safe. 
+            
+Oversee the overall reasoning flow and adjust the plan as needed based on the TSM's progress.
+"
+
+
+
+
+
+========================================
+Prompt 2/3 (Textual Tree Representation)
+========================================
+
+This is dynamically generated, here we give an example.
+
+"
+This is the current reasoning graph: 
+
+Level 0: 
+	Node_0: user 
+		- Children: Node_1 
+ 		- Messages: <Hi> 
+
+Level 1: 
+	Node_1: forward 
+ 		- Children: Node_2 
+ 		- Messages: <Hello! How can I assist you today?> 
+
+Level 2: 
+	Node_2: split 
+ 		- Children: Node_3, Node_4, Node_5 
+ 		- Messages: <>
+
+Level 3: 
+	Node_3: forward 
+      		- Children: Node_6 
+      		- Messages: <Try to solve ...> 
+                  	    <Of course! ...>  
+	Node_4: forward 
+      		- Children: Node_6 
+      		- Messages: <Try to solve...> 
+                            <Understood!..> 
+	Node_5: forward 
+	      	- Children: Node_6 
+      		- Messages: <Try to solve...> 
+                            <Sure, I can...>
+
+Level 4: 
+	...
+" 
+
+
+========================================
+Prompt 3/3 (Operation Explanation)
+========================================
+
+"
+Available operations are: 
+
+forward: 	Simply lets TSM generate. 
+tools: 		Lets TSM generate function calls to a set of related tools. 
+parallelsplit: 	Lets TSM generate 3 distinct answers. It is useful for concurrently trying different strategies, and later aggregating their results. 
+aggregate: 	Lets TSM summarize three different reasoning chains. 
+refine: 	Lets TSM check, wether any mistake might have happened, by reflecting about the last steps. 
+attention: 	Lets TSM remind yourself of what was important, by reflecting about the last steps. 
+final: 		Lets TSM provide a precise and clear answer to the question. Please choose a node and operation to continue the reasoning process. 
+
+IMPORTANT: Only leaf nodes can be selected for operations. Nodes with children are not selectable. 
+"
